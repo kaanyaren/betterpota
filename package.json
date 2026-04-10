@@ -6,7 +6,6 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "postbuild": "cp -f dist/assets/map.*.js dist/assets/map.js",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
