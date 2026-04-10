@@ -75,9 +75,9 @@ function createMarkerIcon(activations, isUnactivated = false) {
   
   return L.divIcon({
     className: `custom-marker ${className}`,
-    html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9]
+    html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13]
   });
 }
 
@@ -160,6 +160,10 @@ function initMap() {
   
   // Store the layer for later use
   window.parksLayer = parksLayer;
+  
+  // Add a test marker to verify markers work
+  var testMarker = L.marker([39.8283, -98.5795]).addTo(map)
+    .bindPopup('Test marker - if you see this, markers work!');
   
   loadParksForLocation(currentLocation);
   createLegend();
