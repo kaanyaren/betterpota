@@ -7,64 +7,66 @@ let currentLocation = 'all';
 
 async function getAllParks() {
   try {
-    // Try to load the Convex client module
-    if (typeof window.getAllParksFromConvex === 'function') {
-      console.log('Using Convex backend for parks data...');
-      const parks = await window.getAllParksFromConvex();
-      if (parks && parks.length > 0) {
-        console.log('Successfully fetched parks from Convex:', parks.length);
-        return parks;
-      }
+    console.log('Fetching parks from Vercel proxy...');
+    const response = await fetch('/api/pota');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
-    // Fallback to direct POTA API if Convex fails
-    console.log('Falling back to direct POTA API...');
-    const POTA_API = 'https://api.pota.app';
-    const response = await fetch(`${POTA_API}/parks`);
-    if (!response.ok) throw new Error('Failed to fetch all parks');
     const parks = await response.json();
-    console.log('All parks fetched from POTA API:', parks.length);
-    
-    // Get stats for a sample of parks (to avoid too many API calls)
-    const sampleParks = parks.slice(0, 100); // Limit to first 100 for demo
-    const enriched = await Promise.all(
-      sampleParks.map(async (park) => {
-        try {
-          const statsResponse = await fetch(`${POTA_API}/park/${park.reference}/stats`);
-          if (statsResponse.ok) {
-            const stats = await statsResponse.json();
-            return {
-              reference: park.reference,
-              name: park.name,
-              latitude: park.latitude,
-              longitude: park.longitude,
-              grid: park.grid,
-              parktype: park.parktype,
-              activations: stats?.activations || 0,
-              qsos: stats?.qsos || 0
-            };
-          }
-        } catch (error) {
-          console.warn('Error fetching stats for park', park.reference, error);
-        }
-        // Return basic park info if stats fail
-        return {
-          reference: park.reference,
-          name: park.name,
-          latitude: park.latitude,
-          longitude: park.longitude,
-          grid: park.grid,
-          parktype: park.parktype,
-          activations: 0,
-          qsos: 0
-        };
-      })
-    );
-    
-    return enriched.filter(park => park !== null);
+    console.log('Successfully fetched parks from proxy:', parks.length);
+    return parks;
   } catch (error) {
-    console.error('Error fetching all parks:', error);
-    return getFallbackParks('all');
+    console.error('Error fetching parks from proxy:', error);
+    // Fallback to direct POTA API
+    try {
+      console.log('Falling back to direct POTA API...');
+      const POTA_API = 'https://api.pota.app';
+      const response = await fetch(`${POTA_API}/parks`);
+      if (!response.ok) throw new Error('Failed to fetch all parks');
+      const parks = await response.json();
+      console.log('All parks fetched from POTA API:', parks.length);
+      
+      // Get stats for a sample of parks (to avoid too many API calls)
+      const sampleParks = parks.slice(0, 50); // Limit to first 50 for demo
+      const enriched = await Promise.all(
+        sampleParks.map(async (park) => {
+          try {
+            const statsResponse = await fetch(`${POTA_API}/park/${park.reference}/stats`);
+            if (statsResponse.ok) {
+              const stats = await statsResponse.json();
+              return {
+                reference: park.reference,
+                name: park.name,
+                latitude: park.latitude,
+                longitude: park.longitude,
+                grid: park.grid,
+                parktype: park.parktype,
+                activations: stats?.activations || 0,
+                qsos: stats?.qsos || 0
+              };
+            }
+          } catch (error) {
+            console.warn('Error fetching stats for park', park.reference, error);
+          }
+          // Return basic park info if stats fail
+          return {
+            reference: park.reference,
+            name: park.name,
+            latitude: park.latitude,
+            longitude: park.longitude,
+            grid: park.grid,
+            parktype: park.parktype,
+            activations: 0,
+            qsos: 0
+          };
+        })
+      );
+      
+      return enriched.filter(park => park !== null);
+    } catch (error) {
+      console.error('Error fetching all parks from POTA API:', error);
+      return getFallbackParks('all');
+    }
   }
 }
 
