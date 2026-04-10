@@ -4,6 +4,10 @@ const L = window.L;
 
 let map;
 let currentLocation = 'all';
+let currentBounds = null;
+
+const PARKS_CACHE_KEY = 'betterpota:allParks:v1';
+const PARKS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 async function fetchJson(url) {
   const response = await fetch(url);
@@ -14,13 +18,27 @@ async function fetchJson(url) {
 }
 
 async function fetchAllParksFromPotaApi() {
+  try {
+    const cached = localStorage.getItem(PARKS_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && Array.isArray(parsed.parks) && Date.now() - parsed.timestamp < PARKS_CACHE_TTL_MS) {
+        console.log('Using cached parks:', parsed.parks.length);
+        return parsed.parks;
+      }
+    }
+  } catch (cacheError) {
+    console.warn('Failed reading parks cache:', cacheError);
+  }
+
   const programs = await fetchJson('https://api.pota.app/programs/locations');
   const prefixes = programs
+    .filter((program) => Number(program.parks) > 0)
     .map((program) => program.prefix)
     .filter((prefix) => typeof prefix === 'string' && prefix.length > 0);
 
   const parksByReference = new Map();
-  const concurrency = 8;
+  const concurrency = 20;
   let nextIndex = 0;
 
   async function worker() {
@@ -60,7 +78,18 @@ async function fetchAllParksFromPotaApi() {
   }
 
   await Promise.all(Array.from({ length: concurrency }, worker));
-  return Array.from(parksByReference.values());
+  const parks = Array.from(parksByReference.values());
+
+  try {
+    localStorage.setItem(PARKS_CACHE_KEY, JSON.stringify({
+      timestamp: Date.now(),
+      parks,
+    }));
+  } catch (cacheError) {
+    console.warn('Failed writing parks cache:', cacheError);
+  }
+
+  return parks;
 }
 
 async function getAllParks() {
@@ -235,18 +264,43 @@ function createParkMarker(park) {
     .bindPopup(createPopupContent(park));
 }
 
-function addParksToMap(parks) {
+async function addParksToMap(parks) {
   var layer = window.parksLayer;
   if (!layer) return;
-  
-  parks.forEach(park => {
-    var marker = createParkMarker(park);
-    layer.addLayer(marker);
-  });
+
+  const BATCH_SIZE = 400;
+  let index = 0;
+
+  while (index < parks.length) {
+    const batch = parks.slice(index, index + BATCH_SIZE);
+    const markers = [];
+
+    for (const park of batch) {
+      if (!currentBounds) {
+        currentBounds = L.latLngBounds([park.latitude, park.longitude], [park.latitude, park.longitude]);
+      } else {
+        currentBounds.extend([park.latitude, park.longitude]);
+      }
+
+      markers.push(createParkMarker(park));
+    }
+
+    if (typeof layer.addLayers === 'function') {
+      layer.addLayers(markers);
+    } else {
+      for (const marker of markers) {
+        layer.addLayer(marker);
+      }
+    }
+
+    index += BATCH_SIZE;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
 }
 
 function clearMarkers() {
   var layer = window.parksLayer;
+  currentBounds = null;
   if (layer) {
     layer.clearLayers();
   }
@@ -263,16 +317,17 @@ function initMap() {
     maxZoom: 20
   }).addTo(map);
   
-  // Simple layer group instead of marker cluster for now
-  var parksLayer = L.layerGroup().addTo(map);
+  // Marker cluster with chunked loading to keep UI responsive
+  var parksLayer = L.markerClusterGroup({
+    chunkedLoading: true,
+    chunkDelay: 20,
+    chunkInterval: 80,
+    removeOutsideVisibleBounds: true,
+    maxClusterRadius: 60,
+  }).addTo(map);
   
   // Store the layer for later use
   window.parksLayer = parksLayer;
-  
-  // Add a test marker to verify markers work
-  var testIcon = createMarkerIcon(10, false);
-  var testMarker = L.marker([39.8283, -98.5795], { icon: testIcon }).addTo(map)
-    .bindPopup('Test marker - if you see this, markers work!');
   
   loadParksForLocation(currentLocation);
   createLegend();
@@ -288,17 +343,11 @@ async function loadParksForLocation(location) {
     console.log('Parks loaded:', parks.length, parks);
     
     if (parks.length > 0) {
-      addParksToMap(parks);
+      await addParksToMap(parks);
       console.log('Markers added to map');
-      
-      // Fit bounds to markers
-      var layers = [];
-      window.parksLayer.eachLayer(function(layer) {
-        layers.push(layer);
-      });
-      if (layers.length > 0) {
-        var group = L.featureGroup(layers);
-        map.fitBounds(group.getBounds().pad(0.1));
+
+      if (currentBounds && parks.length <= 20000) {
+        map.fitBounds(currentBounds.pad(0.05));
         console.log('Map bounds fitted to markers');
       }
     } else {
