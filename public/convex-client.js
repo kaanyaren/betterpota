@@ -1,22 +1,21 @@
-// POTA API proxy client with fallback data
-async function getAllParksFromConvex() {
+// Vercel serverless function client with fallback data
+async function getAllParksFromVercel() {
   try {
-    console.log('Trying to fetch parks from Convex backend...');
-    const response = await fetch('https://curious-stingray-477.convex.cloud/getAllParksWithStats', {
-      method: 'POST',
+    console.log('Trying to fetch parks from Vercel serverless function...');
+    const response = await fetch('/api/pota', {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
     });
     
     if (response.ok) {
       const result = await response.json();
-      console.log('Successfully fetched parks from Convex:', result.length);
+      console.log('Successfully fetched parks from Vercel:', result.length);
       return result;
     }
   } catch (error) {
-    console.log('Convex backend unavailable, using fallback data');
+    console.log('Vercel function unavailable, using fallback data');
   }
   
   // Fallback to demonstration data
@@ -89,4 +88,4 @@ function getFallbackParks() {
 }
 
 // Make functions available globally
-window.getAllParksFromConvex = getAllParksFromConvex;
+window.getAllParksFromVercel = getAllParksFromVercel;

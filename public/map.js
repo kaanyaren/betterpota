@@ -17,56 +17,8 @@ async function getAllParks() {
     return parks;
   } catch (error) {
     console.error('Error fetching parks from proxy:', error);
-    // Fallback to direct POTA API
-    try {
-      console.log('Falling back to direct POTA API...');
-      const POTA_API = 'https://api.pota.app';
-      const response = await fetch(`${POTA_API}/parks`);
-      if (!response.ok) throw new Error('Failed to fetch all parks');
-      const parks = await response.json();
-      console.log('All parks fetched from POTA API:', parks.length);
-      
-      // Get stats for a sample of parks (to avoid too many API calls)
-      const sampleParks = parks.slice(0, 50); // Limit to first 50 for demo
-      const enriched = await Promise.all(
-        sampleParks.map(async (park) => {
-          try {
-            const statsResponse = await fetch(`${POTA_API}/park/${park.reference}/stats`);
-            if (statsResponse.ok) {
-              const stats = await statsResponse.json();
-              return {
-                reference: park.reference,
-                name: park.name,
-                latitude: park.latitude,
-                longitude: park.longitude,
-                grid: park.grid,
-                parktype: park.parktype,
-                activations: stats?.activations || 0,
-                qsos: stats?.qsos || 0
-              };
-            }
-          } catch (error) {
-            console.warn('Error fetching stats for park', park.reference, error);
-          }
-          // Return basic park info if stats fail
-          return {
-            reference: park.reference,
-            name: park.name,
-            latitude: park.latitude,
-            longitude: park.longitude,
-            grid: park.grid,
-            parktype: park.parktype,
-            activations: 0,
-            qsos: 0
-          };
-        })
-      );
-      
-      return enriched.filter(park => park !== null);
-    } catch (error) {
-      console.error('Error fetching all parks from POTA API:', error);
-      return getFallbackParks('all');
-    }
+    // Fallback to demonstration data
+    return getFallbackParks();
   }
 }
 
@@ -78,6 +30,71 @@ async function getParksForLocation(location) {
   
   // Fallback for other locations
   return getFallbackParks(location);
+}
+
+function getFallbackParks() {
+  return [
+    {
+      reference: "K-1000",
+      name: "Central Park",
+      latitude: 40.7829,
+      longitude: -73.9654,
+      grid: "FN31",
+      parktype: "National Park",
+      activations: 45,
+      qsos: 890
+    },
+    {
+      reference: "K-1001",
+      name: "Yellowstone National Park",
+      latitude: 44.4280,
+      longitude: -110.5885,
+      grid: "DN63",
+      parktype: "National Park",
+      activations: 120,
+      qsos: 2450
+    },
+    {
+      reference: "K-1002",
+      name: "Grand Canyon National Park",
+      latitude: 36.0544,
+      longitude: -112.1401,
+      grid: "DM37",
+      parktype: "National Park",
+      activations: 85,
+      qsos: 1780
+    },
+    {
+      reference: "K-1003",
+      name: "Yosemite National Park",
+      latitude: 37.8651,
+      longitude: -119.5383,
+      grid: "CM09",
+      parktype: "National Park",
+      activations: 95,
+      qsos: 2100
+    },
+    {
+      reference: "K-1004",
+      name: "Great Smoky Mountains National Park",
+      latitude: 35.6118,
+      longitude: -83.4895,
+      grid: "EM84",
+      parktype: "National Park",
+      activations: 78,
+      qsos: 1650
+    },
+    {
+      reference: "K-1005",
+      name: "Zion National Park",
+      latitude: 37.2982,
+      longitude: -113.0263,
+      grid: "DM37",
+      parktype: "National Park",
+      activations: 62,
+      qsos: 1340
+    }
+  ];
 }
 
 function getMarkerColor(activations) {
