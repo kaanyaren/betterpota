@@ -10,26 +10,30 @@
 
 <!-- Load scripts -->
 <script is:inline src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
-<script is:inline src="/betterpota/map.js?v=16"></script>
+<script is:inline src="/betterpota/map.js?v=17"></script>
 
-<!-- Initialize with polling -->
+<!-- Initialize map after page load -->
 <script is:inline>
-  (function() {
-    var attempts = 0;
-    var maxAttempts = 30;
-    var interval = setInterval(function() {
-      attempts++;
-      if (typeof window.initMap === 'function' && typeof L !== 'undefined' && L.map) {
-        clearInterval(interval);
-        try {
+  window.addEventListener('load', function() {
+    console.log('Page loaded, checking for L and initMap');
+    if (typeof L !== 'undefined' && typeof window.initMap === 'function') {
+      console.log('L and initMap available, initializing map');
+      window.initMap();
+    } else {
+      console.log('Waiting for L and initMap...');
+      var attempts = 0;
+      var maxAttempts = 50;
+      var interval = setInterval(function() {
+        attempts++;
+        if (typeof L !== 'undefined' && typeof window.initMap === 'function') {
+          clearInterval(interval);
+          console.log('L and initMap available after', attempts, 'attempts');
           window.initMap();
-        } catch(e) {
-          console.error('initMap error:', e);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          console.error('Timeout - L:', typeof L, 'initMap:', typeof window.initMap);
         }
-      } else if (attempts >= maxAttempts) {
-        clearInterval(interval);
-        console.log('Timeout - L:', typeof L, 'initMap:', typeof window.initMap);
-      }
-    }, 100);
-  })();
+      }, 100);
+    }
+  });
 </script>
