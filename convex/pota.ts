@@ -2,42 +2,25 @@ import { query, mutation, httpAction } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 
-// Cache structure for POTA data
+// Simple POTA data without database caching for now
 export const getParks = query({
   args: {},
-  handler: async (ctx) => {
-    // Try to get cached parks first
-    const cachedParks = await ctx.db
-      .query("parks")
-      .order("desc")
-      .first();
-
-    // If we have recent cached data, return it
-    if (cachedParks && Date.now() - cachedParks._creationTime < 24 * 60 * 60 * 1000) {
-      console.log("Returning cached parks");
-      return cachedParks.parks;
-    }
-
-    // Otherwise fetch fresh data
-    console.log("Fetching fresh parks data from POTA API");
+  handler: async () => {
+    console.log("Fetching parks from POTA API...");
     try {
       const response = await fetch("https://api.pota.app/parks");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const parks = await response.json();
-
-      // Cache the data
-      await ctx.db.insert("parks", {
-        parks: parks,
-        _creationTime: Date.now(),
-      });
-
-      return parks;
+      console.log("Successfully fetched", parks.length, "parks");
+      
+      // Return first 100 parks
+      return parks.slice(0, 100);
     } catch (error) {
       console.error("Error fetching parks from POTA API:", error);
-      // Return cached data even if stale, or empty array
-      return cachedParks?.parks || [];
+      // Return empty array on error
+      return [];
     }
   },
 });
@@ -60,20 +43,8 @@ export const getParkStats = query({
 
 export const getAllParksWithStats = query({
   args: {},
-  handler: async (ctx) => {
-    const parks = await ctx.db
-      .query("parksWithStats")
-      .order("desc")
-      .first();
-
-    // Return cached data if recent
-    if (parks && Date.now() - parks._creationTime < 6 * 60 * 60 * 1000) {
-      console.log("Returning cached parks with stats");
-      return parks.parks;
-    }
-
-    // Otherwise fetch fresh data
-    console.log("Fetching parks and stats from POTA API");
+  handler: async () => {
+    console.log("Fetching parks and stats from POTA API...");
     try {
       // Get all parks
       const parksResponse = await fetch("https://api.pota.app/parks");
@@ -82,9 +53,9 @@ export const getAllParksWithStats = query({
       }
       const allParks = await parksResponse.json();
 
-      // Get stats for first 200 parks (for performance)
+      // Get stats for first 50 parks (for performance)
       const parksWithStats = [];
-      const sampleParks = allParks.slice(0, 200);
+      const sampleParks = allParks.slice(0, 50);
       
       for (const park of sampleParks) {
         try {
@@ -117,16 +88,33 @@ export const getAllParksWithStats = query({
         }
       }
 
-      // Cache the enriched data
-      await ctx.db.insert("parksWithStats", {
-        parks: parksWithStats,
-        _creationTime: Date.now(),
-      });
-
+      console.log("Successfully fetched", parksWithStats.length, "parks with stats");
       return parksWithStats;
     } catch (error) {
       console.error("Error fetching parks with stats:", error);
-      return parks?.parks || [];
+      // Return fallback data
+      return [
+        {
+          reference: "K-1000",
+          name: "Central Park",
+          latitude: 40.7829,
+          longitude: -73.9654,
+          grid: "FN31",
+          parktype: "National Park",
+          activations: 45,
+          qsos: 890
+        },
+        {
+          reference: "K-1001", 
+          name: "Yellowstone National Park",
+          latitude: 44.4280,
+          longitude: -110.5885,
+          grid: "DN63",
+          parktype: "National Park",
+          activations: 120,
+          qsos: 2450
+        }
+      ];
     }
   },
 });

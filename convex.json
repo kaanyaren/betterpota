@@ -1,0 +1,12 @@
+{
+  "deployments": {
+    "fortunate-owl-356": {
+      "url": "https://fortunate-owl-356.convex.cloud",
+      "teamSlug": "fortunate-owl-356"
+    }
+  },
+  "projectConfig": {
+    "project": "fortunate-owl-356",
+    "teamSlug": "fortunate-owl-356"
+  }
+}
