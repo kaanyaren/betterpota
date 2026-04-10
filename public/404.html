@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BetterPOTA - Parks on the Air</title>
+  <script>
+    // GitHub Pages SPA workaround
+    const pathSegments = window.location.pathname.split('/');
+    const basePath = '/better-pota';
+    
+    // Check if we're in a subpath that should be handled by the SPA
+    if (pathSegments.length > 2 && pathSegments[1] === 'better-pota') {
+      // Redirect to the main page with hash-based routing
+      window.location.replace(basePath + '/#' + pathSegments.slice(2).join('/'));
+    } else {
+      // Redirect to the main page
+      window.location.replace(basePath + '/');
+    }
+  </script>
+</head>
+<body>
+  <p>Redirecting to BetterPOTA...</p>
+</body>
+</html>

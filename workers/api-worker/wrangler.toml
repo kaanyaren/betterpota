@@ -1,0 +1,8 @@
+name = "better-pota-api"
+compatibility_date = "2024-04-01"
+
+# KV namespace for caching
+[[kv_namespaces]]
+binding = "POTA_CACHE"
+id = "pota-cache"
+preview_id = "pota-cache-preview"

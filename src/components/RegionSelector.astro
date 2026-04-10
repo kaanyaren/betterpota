@@ -1,0 +1,45 @@
+---
+// Region selector component
+const regions = [
+  { value: 'US-GA', label: 'Georgia, USA' },
+  { value: 'US-FL', label: 'Florida, USA' },
+  { value: 'US-CA', label: 'California, USA' },
+  { value: 'US-TX', label: 'Texas, USA' },
+  { value: 'US-NY', label: 'New York, USA' },
+  { value: 'CA-ON', label: 'Ontario, Canada' },
+  { value: 'CA-BC', label: 'British Columbia, Canada' },
+  { value: 'G', label: 'Great Britain' },
+  { value: 'DL', label: 'Germany' },
+  { value: 'F', label: 'France' },
+  { value: 'I', label: 'Italy' },
+  { value: 'JA', label: 'Japan' },
+  { value: 'VK', label: 'Australia' },
+  { value: 'ZL', label: 'New Zealand' }
+];
+---
+
+<!-- Region selector -->
+<div class="region-selector">
+  <label for="region-selector">Select Region:</label>
+  <select id="region-selector">
+    {regions.map(region => (
+      <option value={region.value}>{region.label}</option>
+    ))}
+  </select>
+  
+  <!-- Search box (optional) -->
+  <div style="margin-top: 8px;">
+    <input 
+      type="text" 
+      id="park-search" 
+      placeholder="Search park reference..." 
+      style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; width: 150px;"
+    />
+    <button 
+      id="search-button" 
+      style="margin-left: 4px; padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;"
+    >
+      Search
+    </button>
+  </div>
+</div>

@@ -1,5 +1,6 @@
 ---
-
+import Map from '../components/Map.astro';
+import RegionSelector from '../components/RegionSelector.astro';
 ---
 
 <html lang="en">
@@ -9,9 +10,14 @@
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<title>BetterPOTA - Parks on the Air Map</title>
+		<style>
+			/* Import global styles */
+			@import '../styles/global.css';
+		</style>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<RegionSelector />
+		<Map />
 	</body>
 </html>
