@@ -1,32 +1,24 @@
 ---
 // Map component that initializes the Leaflet map
-import { initMap } from '../scripts/map.js';
-
-// Load Leaflet CSS and JS
-const leafletCSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-const leafletJS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-const markerClusterCSS = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css';
-const markerClusterDefaultCSS = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css';
-const markerClusterJS = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
 ---
 
 <!-- Map container -->
 <div id="map"></div>
 
 <!-- Load Leaflet and MarkerCluster CSS -->
-<link rel="stylesheet" href={leafletCSS} />
-<link rel="stylesheet" href={markerClusterCSS} />
-<link rel="stylesheet" href={markerClusterDefaultCSS} />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
 <!-- Load Leaflet and MarkerCluster JS -->
-<script>
+<script type="module">
   // Load Leaflet and MarkerCluster, then initialize map
   Promise.all([
     import('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'),
     import('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js')
   ]).then(async () => {
     // Initialize map after dependencies are loaded
-    const { initMap } = await import('../scripts/map.js');
+    const { initMap } = await import('/betterpota/assets/map.js');
     initMap();
   }).catch(error => {
     console.error('Error loading map dependencies:', error);

@@ -156,5 +156,6 @@ function createLegend() {
   document.body.appendChild(legend);
 }
 
-// Export functions for use in Astro components
-export { initMap, loadParksForLocation };
+// Make functions globally available for Astro components
+window.initMap = initMap;
+window.loadParksForLocation = loadParksForLocation;
