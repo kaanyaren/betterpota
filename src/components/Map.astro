@@ -20,7 +20,13 @@
       mc.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js';
       mc.onload = function() {
         var map = document.createElement('script');
-        map.src = '/betterpota/map.js?v=4';
+        map.src = '/betterpota/map.js?v=6';
+        map.onload = function() {
+          // Call initMap after map.js is loaded
+          if (window.initMap) {
+            window.initMap();
+          }
+        };
         document.head.appendChild(map);
       };
       document.head.appendChild(mc);
