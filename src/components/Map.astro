@@ -5,22 +5,22 @@
 <!-- Map container -->
 <div id="map"></div>
 
-<!-- Load Leaflet and MarkerCluster CSS from jsdelivr -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<!-- Load Leaflet and MarkerCluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
 <!-- Load scripts with proper sequencing -->
 <script is:inline>
   (function() {
     var leaflet = document.createElement('script');
-    leaflet.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js';
+    leaflet.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js';
     leaflet.onload = function() {
       var mc = document.createElement('script');
-      mc.src = 'https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js';
+      mc.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js';
       mc.onload = function() {
         var map = document.createElement('script');
-        map.src = '/betterpota/map.js';
+        map.src = '/betterpota/map.js?v=4';
         document.head.appendChild(map);
       };
       document.head.appendChild(mc);
