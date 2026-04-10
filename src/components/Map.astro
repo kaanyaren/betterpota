@@ -5,12 +5,29 @@
 <!-- Map container -->
 <div id="map"></div>
 
-<!-- Load Leaflet and MarkerCluster CSS -->
+<!-- Load Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<!-- Load Leaflet and MarkerCluster JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script is:inline src="/betterpota/map.js"></script>
+<!-- Load scripts in order with callback -->
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script is:inline>
+  // Wait for Leaflet to load, then load MarkerCluster
+  function loadMarkerCluster() {
+    if (typeof L === 'undefined') {
+      setTimeout(loadMarkerCluster, 50);
+      return;
+    }
+    var script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
+    script.onload = function() {
+      // Load our map.js after MarkerCluster is ready
+      var mapScript = document.createElement('script');
+      mapScript.src = '/betterpota/map.js';
+      document.head.appendChild(mapScript);
+    };
+    document.head.appendChild(script);
+  }
+  loadMarkerCluster();
+</script>
