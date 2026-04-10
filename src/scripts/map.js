@@ -5,21 +5,21 @@ import { addParksToMap, clearMarkers, getMarkerColor, getStatusLabel } from './m
 
 let map;
 let markerClusterGroup;
-let currentLocation = 'US-GA'; // Default location
+let currentLocation = 'US-GA';
 
 // Initialize the map
 function initMap() {
   // Create map
-  map = L.map('map').setView([39.8283, -98.5795], 4); // Center on US
+  window.L.map('map').setView([39.8283, -98.5795], 4); // Center on US
   
   // Add OpenStreetMap tiles
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 19
   }).addTo(map);
   
   // Initialize marker cluster group
-  markerClusterGroup = L.markerClusterGroup({
+  markerClusterGroup = window.L.markerClusterGroup({
     maxClusterRadius: 50,
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: true,
