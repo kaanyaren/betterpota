@@ -1,5 +1,5 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 const app = express();
 
 app.use(cors());
@@ -30,40 +30,18 @@ app.get('/api/parks', async (req, res) => {
     }
     const allParks = await parksResponse.json();
 
-    // Get stats for first 100 parks
-    const parksWithStats = [];
-    const sampleParks = allParks.slice(0, 100);
-    
-    for (const park of sampleParks) {
-      try {
-        const statsResponse = await fetch(`${POTA_API}/park/${park.reference}/stats`);
-        if (statsResponse.ok) {
-          const stats = await statsResponse.json();
-          parksWithStats.push({
-            reference: park.reference,
-            name: park.name,
-            latitude: park.latitude,
-            longitude: park.longitude,
-            grid: park.grid,
-            parktype: park.parktype,
-            activations: stats?.activations || 0,
-            qsos: stats?.qsos || 0,
-          });
-        }
-      } catch (error) {
-        console.warn(`Error fetching stats for ${park.reference}:`, error);
-        parksWithStats.push({
-          reference: park.reference,
-          name: park.name,
-          latitude: park.latitude,
-          longitude: park.longitude,
-          grid: park.grid,
-          parktype: park.parktype,
-          activations: 0,
-          qsos: 0,
-        });
-      }
-    }
+    // Return the complete park list and avoid one-by-one stats calls,
+    // which can be too slow for large datasets.
+    const parksWithStats = allParks.map((park) => ({
+      reference: park.reference,
+      name: park.name,
+      latitude: park.latitude,
+      longitude: park.longitude,
+      grid: park.grid,
+      parktype: park.parktype,
+      activations: 0,
+      qsos: 0,
+    }));
 
     // Update cache
     parksCache = parksWithStats;

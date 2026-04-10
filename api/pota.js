@@ -24,40 +24,18 @@ export default async function handler(req, res) {
     }
     const allParks = await parksResponse.json();
 
-    // Get stats for first 50 parks
-    const parksWithStats = [];
-    const sampleParks = allParks.slice(0, 50);
-    
-    for (const park of sampleParks) {
-      try {
-        const statsResponse = await fetch(`${POTA_API}/park/${park.reference}/stats`);
-        if (statsResponse.ok) {
-          const stats = await statsResponse.json();
-          parksWithStats.push({
-            reference: park.reference,
-            name: park.name,
-            latitude: park.latitude,
-            longitude: park.longitude,
-            grid: park.grid,
-            parktype: park.parktype,
-            activations: stats?.activations || 0,
-            qsos: stats?.qsos || 0,
-          });
-        }
-      } catch (error) {
-        console.warn(`Error fetching stats for ${park.reference}:`, error);
-        parksWithStats.push({
-          reference: park.reference,
-          name: park.name,
-          latitude: park.latitude,
-          longitude: park.longitude,
-          grid: park.grid,
-          parktype: park.parktype,
-          activations: 0,
-          qsos: 0,
-        });
-      }
-    }
+    // Keep the full park list and avoid per-park stats calls here,
+    // which can time out and truncate results.
+    const parksWithStats = allParks.map((park) => ({
+      reference: park.reference,
+      name: park.name,
+      latitude: park.latitude,
+      longitude: park.longitude,
+      grid: park.grid,
+      parktype: park.parktype,
+      activations: 0,
+      qsos: 0,
+    }));
 
     console.log(`Successfully fetched ${parksWithStats.length} parks with stats`);
     res.status(200).json(parksWithStats);

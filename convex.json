@@ -1,4 +1,8 @@
 {
+  "$schema": "node_modules/convex/schemas/convex.schema.json",
   "project": "betterpota",
-  "team": "kaan-yaren"
+  "team": "kaan-yaren",
+  "aiFiles": {
+    "enabled": false
+  }
 }
