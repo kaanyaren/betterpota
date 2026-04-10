@@ -2,7 +2,7 @@
 async function getAllParksFromConvex() {
   try {
     console.log('Trying to fetch parks from Convex backend...');
-    const response = await fetch('https://fortunate-owl-356.convex.cloud/getAllParksWithStats', {
+    const response = await fetch('https://curious-stingray-477.convex.cloud/getAllParksWithStats', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
