@@ -3,11 +3,12 @@
 const L = window.L;
 
 let map;
-let currentLocation = 'all';
-let currentBounds = null;
-
-const PARKS_CACHE_KEY = 'betterpota:allParks:v1';
-const PARKS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let ciLayer;
+let locationsIndex = [];
+const loadedLocations = new Set();
+const parksByReference = new Map();
+let loadingInProgress = false;
+let debounceTimer = null;
 
 async function fetchJson(url) {
   const response = await fetch(url);
@@ -17,183 +18,117 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function fetchAllParksFromPotaApi() {
+async function loadLocationsIndex() {
   try {
-    const cached = localStorage.getItem(PARKS_CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed && Array.isArray(parsed.parks) && Date.now() - parsed.timestamp < PARKS_CACHE_TTL_MS) {
-        console.log('Using cached parks:', parsed.parks.length);
-        return parsed.parks;
-      }
-    }
-  } catch (cacheError) {
-    console.warn('Failed reading parks cache:', cacheError);
-  }
-
-  const programs = await fetchJson('https://api.pota.app/programs/locations');
-  const prefixes = programs
-    .filter((program) => Number(program.parks) > 0)
-    .map((program) => program.prefix)
-    .filter((prefix) => typeof prefix === 'string' && prefix.length > 0);
-
-  const parksByReference = new Map();
-  const concurrency = 20;
-  let nextIndex = 0;
-
-  async function worker() {
-    while (nextIndex < prefixes.length) {
-      const index = nextIndex;
-      nextIndex += 1;
-      const prefix = prefixes[index];
-
-      try {
-        const programParks = await fetchJson(`https://api.pota.app/program/parks/${encodeURIComponent(prefix)}`);
-        for (const park of programParks) {
-          if (!park || parksByReference.has(park.reference)) {
-            continue;
+    const programs = await fetchJson('https://api.pota.app/programs/locations');
+    const locations = [];
+    for (const program of programs) {
+      for (const entity of program.entities || []) {
+        for (const loc of entity.locations || []) {
+          if (loc.parks > 0 && loc.latitude != null && loc.longitude != null) {
+            locations.push({
+              descriptor: loc.descriptor,
+              lat: loc.latitude,
+              lon: loc.longitude,
+              parkCount: loc.parks,
+            });
           }
-
-          const latitude = Number(park.latitude);
-          const longitude = Number(park.longitude);
-          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-            continue;
-          }
-
-          parksByReference.set(park.reference, {
-            reference: park.reference,
-            name: park.name,
-            latitude,
-            longitude,
-            grid: park.grid,
-            parktype: park.parktype || park.locationDesc || 'Park',
-            activations: Number(park.activations) || 0,
-            qsos: Number(park.qsos) || 0,
-          });
         }
-      } catch (error) {
-        console.warn(`Failed loading program ${prefix}:`, error);
       }
     }
-  }
-
-  await Promise.all(Array.from({ length: concurrency }, worker));
-  const parks = Array.from(parksByReference.values());
-
-  try {
-    localStorage.setItem(PARKS_CACHE_KEY, JSON.stringify({
-      timestamp: Date.now(),
-      parks,
-    }));
-  } catch (cacheError) {
-    console.warn('Failed writing parks cache:', cacheError);
-  }
-
-  return parks;
-}
-
-async function getAllParks() {
-  try {
-    console.log('Fetching all parks directly from POTA API...');
-    const parks = await fetchAllParksFromPotaApi();
-    if (parks.length > 0) {
-      console.log('Successfully fetched parks from POTA API:', parks.length);
-      return parks;
-    }
-
-    throw new Error('POTA API returned no parks');
+    console.log('Location index built:', locations.length, 'locations');
+    return locations;
   } catch (error) {
-    console.error('Error fetching parks from POTA API:', error);
+    console.error('Failed to load locations index:', error);
+    return [];
+  }
+}
 
-    // Fallback to Convex HTTP action if available
-    try {
-      if (typeof window.getAllParksFromConvex === 'function') {
-        const parks = await window.getAllParksFromConvex();
-        console.log('Successfully fetched parks from Convex:', parks.length);
-        return parks;
+function getLocationsInViewport() {
+  const bounds = map.getBounds();
+  const result = [];
+  for (const loc of locationsIndex) {
+    if (bounds.contains(L.latLng(loc.lat, loc.lon))) {
+      result.push(loc);
+    }
+  }
+  return result;
+}
+
+async function loadParksForViewport() {
+  if (loadingInProgress || locationsIndex.length === 0) return;
+
+  const visibleLocations = getLocationsInViewport();
+  const newLocations = visibleLocations.filter(
+    (loc) => !loadedLocations.has(loc.descriptor)
+  );
+
+  if (newLocations.length === 0) return;
+
+  loadingInProgress = true;
+  showLoading(true);
+  updateParkCounter();
+
+  try {
+    const BATCH_CONCURRENCY = 6;
+    let nextIndex = 0;
+
+    async function worker() {
+      while (nextIndex < newLocations.length) {
+        const idx = nextIndex++;
+        const loc = newLocations[idx];
+        loadedLocations.add(loc.descriptor);
+
+        try {
+          const parks = await fetchJson(
+            `https://api.pota.app/location/parks/${encodeURIComponent(loc.descriptor)}`
+          );
+          for (const park of parks) {
+            const latitude = Number(park.latitude);
+            const longitude = Number(park.longitude);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+
+            const ref = park.reference;
+            if (parksByReference.has(ref)) continue;
+
+            const parkData = {
+              reference: ref,
+              name: park.name,
+              latitude,
+              longitude,
+              grid: park.grid,
+              parktype: park.parktype || park.locationDesc || 'Park',
+              activations: Number(park.activations) || 0,
+              qsos: Number(park.qsos) || 0,
+            };
+
+            parksByReference.set(ref, parkData);
+            addParkToCanvas(parkData);
+          }
+        } catch (error) {
+          console.warn(`Failed loading location ${loc.descriptor}:`, error);
+        }
       }
-    } catch (fallbackError) {
-      console.error('Convex fallback also failed:', fallbackError);
     }
 
-    // Final fallback to demonstration data
-    return getGlobalFallbackParks();
+    await Promise.all(
+      Array.from({ length: Math.min(BATCH_CONCURRENCY, newLocations.length) }, worker)
+    );
+
+    updateParkCounter();
+  } catch (error) {
+    console.error('Error loading viewport parks:', error);
+  } finally {
+    loadingInProgress = false;
+    showLoading(false);
   }
 }
 
-async function getParksForLocation(location) {
-  console.log('Fetching parks for:', location);
-  if (location === 'all') {
-    return await getAllParks();
-  }
-  
-  // Fallback for other locations
-  return getFallbackParks(location);
-}
-
-function getFallbackParks() {
-  return [
-    {
-      reference: "K-1000",
-      name: "Central Park",
-      latitude: 40.7829,
-      longitude: -73.9654,
-      grid: "FN31",
-      parktype: "National Park",
-      activations: 45,
-      qsos: 890
-    },
-    {
-      reference: "K-1001",
-      name: "Yellowstone National Park",
-      latitude: 44.4280,
-      longitude: -110.5885,
-      grid: "DN63",
-      parktype: "National Park",
-      activations: 120,
-      qsos: 2450
-    },
-    {
-      reference: "K-1002",
-      name: "Grand Canyon National Park",
-      latitude: 36.0544,
-      longitude: -112.1401,
-      grid: "DM37",
-      parktype: "National Park",
-      activations: 85,
-      qsos: 1780
-    },
-    {
-      reference: "K-1003",
-      name: "Yosemite National Park",
-      latitude: 37.8651,
-      longitude: -119.5383,
-      grid: "CM09",
-      parktype: "National Park",
-      activations: 95,
-      qsos: 2100
-    },
-    {
-      reference: "K-1004",
-      name: "Great Smoky Mountains National Park",
-      latitude: 35.6118,
-      longitude: -83.4895,
-      grid: "EM84",
-      parktype: "National Park",
-      activations: 78,
-      qsos: 1650
-    },
-    {
-      reference: "K-1005",
-      name: "Zion National Park",
-      latitude: 37.2982,
-      longitude: -113.0263,
-      grid: "DM37",
-      parktype: "National Park",
-      activations: 62,
-      qsos: 1340
-    }
-  ];
+function onMapMoveEnd() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    loadParksForViewport();
+  }, 300);
 }
 
 function getMarkerColor(activations) {
@@ -206,18 +141,6 @@ function getMarkerColor(activations) {
   return '#006600';
 }
 
-function createMarkerIcon(activations, isUnactivated = false) {
-  const color = getMarkerColor(activations);
-  const className = isUnactivated ? 'blinking-marker' : '';
-  
-  return L.divIcon({
-    className: `custom-marker ${className}`,
-    html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13]
-  });
-}
-
 function getStatusLabel(activations) {
   if (activations === 0) return 'Unactivated';
   if (activations <= 4) return 'Low';
@@ -228,10 +151,44 @@ function getStatusLabel(activations) {
   return 'Very High';
 }
 
+function addParkToCanvas(park) {
+  if (!ciLayer) return;
+
+  const color = getMarkerColor(park.activations);
+  const icon = L.icon({
+    iconUrl: createCircleDataUrl(color),
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
+
+  const marker = L.marker([park.latitude, park.longitude], { icon });
+  marker.parkReference = park.reference;
+  ciLayer.addMarker(marker);
+}
+
+function createCircleDataUrl(color) {
+  const size = 12;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const r = size / 2;
+
+  ctx.beginPath();
+  ctx.arc(r, r, r - 1.5, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  return canvas.toDataURL();
+}
+
 function createPopupContent(park) {
   const isUnactivated = park.activations === 0;
   const color = getMarkerColor(park.activations);
-  
+
   return `
     <div class="park-popup">
       <h3>${park.name}</h3>
@@ -256,113 +213,72 @@ function createPopupContent(park) {
   `;
 }
 
-function createParkMarker(park) {
-  const isUnactivated = park.activations === 0;
-  const icon = createMarkerIcon(park.activations, isUnactivated);
-  
-  return L.marker([park.latitude, park.longitude], { icon })
-    .bindPopup(createPopupContent(park));
-}
-
-async function addParksToMap(parks) {
-  var layer = window.parksLayer;
-  if (!layer) return;
-
-  const BATCH_SIZE = 400;
-  let index = 0;
-
-  while (index < parks.length) {
-    const batch = parks.slice(index, index + BATCH_SIZE);
-    const markers = [];
-
-    for (const park of batch) {
-      if (!currentBounds) {
-        currentBounds = L.latLngBounds([park.latitude, park.longitude], [park.latitude, park.longitude]);
-      } else {
-        currentBounds.extend([park.latitude, park.longitude]);
-      }
-
-      markers.push(createParkMarker(park));
-    }
-
-    if (typeof layer.addLayers === 'function') {
-      layer.addLayers(markers);
-    } else {
-      for (const marker of markers) {
-        layer.addLayer(marker);
-      }
-    }
-
-    index += BATCH_SIZE;
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-  }
-}
-
-function clearMarkers() {
-  var layer = window.parksLayer;
-  currentBounds = null;
-  if (layer) {
-    layer.clearLayers();
-  }
-}
-
 function initMap() {
   console.log('initMap called, L available:', typeof L !== 'undefined');
   map = L.map('map').setView([39.8283, -98.5795], 4);
   console.log('Map initialized');
-  
-  // CartoDB Voyager (light) basemap
+
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors, © CARTO',
-    maxZoom: 20
+    attribution: '&copy; OpenStreetMap contributors, &copy; CARTO',
+    maxZoom: 20,
   }).addTo(map);
-  
-  // Marker cluster with chunked loading to keep UI responsive
-  var parksLayer = L.markerClusterGroup({
-    chunkedLoading: true,
-    chunkDelay: 20,
-    chunkInterval: 80,
-    removeOutsideVisibleBounds: true,
-    maxClusterRadius: 60,
-  }).addTo(map);
-  
-  // Store the layer for later use
-  window.parksLayer = parksLayer;
-  
-  loadParksForLocation(currentLocation);
+
+  ciLayer = L.canvasIconLayer({}).addTo(map);
+
+  ciLayer.addOnClickListener(function (e, data) {
+    if (!data || data.length === 0) return;
+    const marker = data[0];
+    const ref = marker.data && marker.data.parkReference;
+    if (!ref) return;
+    const park = parksByReference.get(ref);
+    if (!park) return;
+
+    const popup = L.popup()
+      .setLatLng([park.latitude, park.longitude])
+      .setContent(createPopupContent(park))
+      .openOn(map);
+  });
+
+  map.on('moveend', onMapMoveEnd);
+
   createLegend();
+  createParkCounter();
+
+  (async function () {
+    showLoading(true);
+    locationsIndex = await loadLocationsIndex();
+    if (locationsIndex.length > 0) {
+      await loadParksForViewport();
+    } else {
+      await loadFallbackParks();
+    }
+    showLoading(false);
+  })();
 }
 
-async function loadParksForLocation(location) {
-  try {
-    showLoading(true);
-    clearMarkers();
-    
-    console.log('Loading parks for location:', location);
-    const parks = await getParksForLocation(location);
-    console.log('Parks loaded:', parks.length, parks);
-    
-    if (parks.length > 0) {
-      await addParksToMap(parks);
-      console.log('Markers added to map');
+async function loadFallbackParks() {
+  const fallbackParks = [
+    { reference: "K-0001", name: "Yellowstone National Park", latitude: 44.428, longitude: -110.5885, grid: "DN63", parktype: "National Park", activations: 120, qsos: 2450 },
+    { reference: "K-0002", name: "Grand Canyon National Park", latitude: 36.0544, longitude: -112.1401, grid: "DM37", parktype: "National Park", activations: 85, qsos: 1780 },
+    { reference: "K-0003", name: "Yosemite National Park", latitude: 37.8651, longitude: -119.5383, grid: "CM09", parktype: "National Park", activations: 95, qsos: 2100 },
+    { reference: "K-0004", name: "Great Smoky Mountains NP", latitude: 35.6118, longitude: -83.4895, grid: "EM84", parktype: "National Park", activations: 78, qsos: 1650 },
+    { reference: "K-0005", name: "Zion National Park", latitude: 37.2982, longitude: -113.0263, grid: "DM37", parktype: "National Park", activations: 62, qsos: 1340 },
+    { reference: "VE-0001", name: "Banff National Park", latitude: 51.4968, longitude: -115.9281, grid: "DO20", parktype: "National Park", activations: 32, qsos: 680 },
+    { reference: "G-0001", name: "Lake District National Park", latitude: 54.4609, longitude: -3.0886, grid: "IO84", parktype: "National Park", activations: 15, qsos: 320 },
+    { reference: "VK-0001", name: "Blue Mountains NP", latitude: -33.615, longitude: 150.4769, grid: "QF56", parktype: "National Park", activations: 22, qsos: 450 },
+    { reference: "JA-0001", name: "Fuji-Hakone-Izu NP", latitude: 35.3606, longitude: 138.7274, grid: "PM85", parktype: "National Park", activations: 25, qsos: 510 },
+    { reference: "DL-0001", name: "Bavarian Forest NP", latitude: 49.0, longitude: 13.3833, grid: "JN68", parktype: "National Park", activations: 12, qsos: 240 },
+  ];
 
-      if (currentBounds && parks.length <= 20000) {
-        map.fitBounds(currentBounds.pad(0.05));
-        console.log('Map bounds fitted to markers');
-      }
-    } else {
-      console.warn('No parks found for location:', location);
-    }
-  } catch (error) {
-    console.error('Error loading parks:', error);
-  } finally {
-    showLoading(false);
+  for (const park of fallbackParks) {
+    parksByReference.set(park.reference, park);
+    addParkToCanvas(park);
   }
+  updateParkCounter();
 }
 
 function showLoading(show) {
   let loadingEl = document.getElementById('loading');
-  
   if (show) {
     if (!loadingEl) {
       loadingEl = document.createElement('div');
@@ -377,146 +293,21 @@ function showLoading(show) {
   }
 }
 
-function getFallbackParks(location) {
-  // Fallback data for demonstration when API is unavailable
-  const fallbackData = {
-    'US-GA': [
-      {
-        reference: 'K-2950',
-        name: 'Stone Mountain Park',
-        latitude: 33.8062,
-        longitude: -84.1449,
-        grid: 'EM73',
-        parktype: 'State Park',
-        activations: 15,
-        qsos: 320
-      },
-      {
-        reference: 'K-2951',
-        name: 'Sweetwater Creek State Park',
-        latitude: 33.7569,
-        longitude: -84.6283,
-        grid: 'EM73',
-        parktype: 'State Park',
-        activations: 8,
-        qsos: 156
-      },
-      {
-        reference: 'K-2952',
-        name: 'Chattahoochee River National Recreation Area',
-        latitude: 33.9904,
-        longitude: -84.3214,
-        grid: 'EM73',
-        parktype: 'National Recreation Area',
-        activations: 0,
-        qsos: 0
-      }
-    ],
-    'all': [
-      {
-        reference: 'K-1000',
-        name: 'Central Park',
-        latitude: 40.7829,
-        longitude: -73.9654,
-        grid: 'FN31',
-        parktype: 'National Park',
-        activations: 45,
-        qsos: 890
-      },
-      {
-        reference: 'K-1001',
-        name: 'Yellowstone National Park',
-        latitude: 44.4280,
-        longitude: -110.5885,
-        grid: 'DN63',
-        parktype: 'National Park',
-        activations: 120,
-        qsos: 2450
-      },
-      {
-        reference: 'K-1002',
-        name: 'Grand Canyon National Park',
-        latitude: 36.0544,
-        longitude: -112.1401,
-        grid: 'DM37',
-        parktype: 'National Park',
-        activations: 85,
-        qsos: 1780
-      },
-      {
-        reference: 'K-1003',
-        name: 'Yosemite National Park',
-        latitude: 37.8651,
-        longitude: -119.5383,
-        grid: 'CM09',
-        parktype: 'National Park',
-        activations: 95,
-        qsos: 2100
-      },
-      {
-        reference: 'K-1004',
-        name: 'Great Smoky Mountains National Park',
-        latitude: 35.6118,
-        longitude: -83.4895,
-        grid: 'EM84',
-        parktype: 'National Park',
-        activations: 78,
-        qsos: 1650
-      },
-      {
-        reference: 'K-1005',
-        name: 'Zion National Park',
-        latitude: 37.2982,
-        longitude: -113.0263,
-        grid: 'DM37',
-        parktype: 'National Park',
-        activations: 62,
-        qsos: 1340
-      },
-      {
-        reference: 'K-1006',
-        name: 'Rocky Mountain National Park',
-        latitude: 40.3428,
-        longitude: -105.6836,
-        grid: 'DM79',
-        parktype: 'National Park',
-        activations: 88,
-        qsos: 1920
-      },
-      {
-        reference: 'K-1007',
-        name: 'Acadia National Park',
-        latitude: 44.3386,
-        longitude: -68.2733,
-        grid: 'FN54',
-        parktype: 'National Park',
-        activations: 52,
-        qsos: 1100
-      },
-      {
-        reference: 'K-1008',
-        name: 'Everglades National Park',
-        latitude: 25.2866,
-        longitude: -80.8987,
-        grid: 'EL97',
-        parktype: 'National Park',
-        activations: 34,
-        qsos: 720
-      },
-      {
-        reference: 'K-1009',
-        name: 'Glacier National Park',
-        latitude: 48.7596,
-        longitude: -113.7870,
-        grid: 'DN47',
-        parktype: 'National Park',
-        activations: 41,
-        qsos: 890
-      }
-    ]
-  };
-  
-  return fallbackData[location] || fallbackData['all'];
+function createParkCounter() {
+  let counterEl = document.getElementById('park-counter');
+  if (!counterEl) {
+    counterEl = document.createElement('div');
+    counterEl.id = 'park-counter';
+    counterEl.className = 'park-counter';
+    document.body.appendChild(counterEl);
+  }
+}
+
+function updateParkCounter() {
+  const counterEl = document.getElementById('park-counter');
+  if (counterEl) {
+    counterEl.textContent = `${parksByReference.size} parks loaded`;
+  }
 }
 
 function createLegend() {
@@ -553,141 +344,16 @@ function createLegend() {
       <span>Very High (100+)</span>
     </div>
   `;
-  
+
   document.body.appendChild(legend);
 }
 
-function getGlobalFallbackParks() {
-  return [
-    // US Parks
-    {
-      reference: "K-1000",
-      name: "Central Park",
-      latitude: 40.7829,
-      longitude: -73.9654,
-      grid: "FN31",
-      parktype: "National Park",
-      activations: 45,
-      qsos: 890
-    },
-    {
-      reference: "K-1001",
-      name: "Yellowstone National Park",
-      latitude: 44.4280,
-      longitude: -110.5885,
-      grid: "DN63",
-      parktype: "National Park",
-      activations: 120,
-      qsos: 2450
-    },
-    {
-      reference: "K-1002",
-      name: "Grand Canyon National Park",
-      latitude: 36.0544,
-      longitude: -112.1401,
-      grid: "DM37",
-      parktype: "National Park",
-      activations: 85,
-      qsos: 1780
-    },
-    // Canada Parks
-    {
-      reference: "VE-0010",
-      name: "Banff National Park",
-      latitude: 51.4968,
-      longitude: -115.9281,
-      grid: "DO20",
-      parktype: "National Park",
-      activations: 32,
-      qsos: 680
-    },
-    {
-      reference: "VE-0020",
-      name: "Jasper National Park",
-      latitude: 52.8733,
-      longitude: -118.0813,
-      grid: "DO35",
-      parktype: "National Park",
-      activations: 28,
-      qsos: 520
-    },
-    // UK Parks
-    {
-      reference: "G-0010",
-      name: "Lake District National Park",
-      latitude: 54.4609,
-      longitude: -3.0886,
-      grid: "IO84",
-      parktype: "National Park",
-      activations: 15,
-      qsos: 320
-    },
-    {
-      reference: "G-0020",
-      name: "Snowdonia National Park",
-      latitude: 53.0685,
-      longitude: -4.0763,
-      grid: "IO73",
-      parktype: "National Park",
-      activations: 18,
-      qsos: 380
-    },
-    // Australia Parks
-    {
-      reference: "VK-0010",
-      name: "Blue Mountains National Park",
-      latitude: -33.6150,
-      longitude: 150.4769,
-      grid: "QF56",
-      parktype: "National Park",
-      activations: 22,
-      qsos: 450
-    },
-    {
-      reference: "VK-0020",
-      name: "Kakadu National Park",
-      latitude: -12.4210,
-      longitude: 132.8340,
-      grid: "PI52",
-      parktype: "National Park",
-      activations: 8,
-      qsos: 180
-    },
-    // Japan Parks
-    {
-      reference: "JA-0010",
-      name: "Fuji-Hakone-Izu National Park",
-      latitude: 35.3606,
-      longitude: 138.7274,
-      grid: "PM85",
-      parktype: "National Park",
-      activations: 25,
-      qsos: 510
-    },
-    // Germany Parks
-    {
-      reference: "DL-0010",
-      name: "Bavarian Forest National Park",
-      latitude: 49.0000,
-      longitude: 13.3833,
-      grid: "JN68",
-      parktype: "National Park",
-      activations: 12,
-      qsos: 240
-    },
-    // New Zealand Parks
-    {
-      reference: "ZL-0010",
-      name: "Fiordland National Park",
-      latitude: -44.9625,
-      longitude: 167.6100,
-      grid: "RE38",
-      parktype: "National Park",
-      activations: 10,
-      qsos: 210
-    }
-  ];
-}
-
 window.initMap = initMap;
-window.loadParksForLocation = loadParksForLocation;
+window.loadParksForLocation = function () {
+  loadedLocations.clear();
+  parksByReference.clear();
+  if (ciLayer) {
+    ciLayer.clearLayers();
+  }
+  loadParksForViewport();
+};

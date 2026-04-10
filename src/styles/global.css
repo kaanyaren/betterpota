@@ -162,3 +162,19 @@ body {
   border-radius: 8px;
   text-align: center;
 }
+
+/* Park counter */
+.park-counter {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(255,255,255,0.9);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #2c3e50;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  pointer-events: none;
+}
