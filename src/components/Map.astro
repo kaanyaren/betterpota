@@ -5,27 +5,31 @@
 <!-- Map container -->
 <div id="map"></div>
 
-<!-- Load Leaflet and MarkerCluster CSS from jsdelivr -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<!-- Load Leaflet and MarkerCluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<!-- Load Leaflet from jsdelivr -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<!-- Load scripts with async/defer and polling for L -->
+<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script is:inline src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script>
+<script is:inline src="/betterpota/map.js?v=11"></script>
 
-<!-- Load MarkerCluster from jsdelivr -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script>
-
-<!-- Load map.js with version 10 -->
-<script is:inline src="/betterpota/map.js?v=10"></script>
-
-<!-- Initialize map -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(function() {
-    if (typeof window.initMap === 'function') {
-      window.initMap();
-    }
-  }, 500);
-});
+<!-- Wait and initialize -->
+<script is:inline>
+  (function() {
+    var attempts = 0;
+    var maxAttempts = 20;
+    var interval = setInterval(function() {
+      attempts++;
+      if (typeof window.initMap === 'function' && typeof L !== 'undefined') {
+        clearInterval(interval);
+        window.initMap();
+        console.log('Map initialized after', attempts, 'attempts');
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        console.log('Max attempts reached, L:', typeof L, 'initMap:', typeof window.initMap);
+      }
+    }, 100);
+  })();
 </script>
