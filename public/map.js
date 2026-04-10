@@ -3,7 +3,6 @@
 const L = window.L;
 
 let map;
-let markerClusterGroup;
 let currentLocation = 'US-GA';
 
 const POTA_API = 'https://api.pota.app';
@@ -118,15 +117,21 @@ function createParkMarker(park) {
     .bindPopup(createPopupContent(park));
 }
 
-function addParksToMap(parks, markerClusterGroup) {
+function addParksToMap(parks) {
+  var layer = window.parksLayer;
+  if (!layer) return;
+  
   parks.forEach(park => {
-    const marker = createParkMarker(park);
-    markerClusterGroup.addLayer(marker);
+    var marker = createParkMarker(park);
+    layer.addLayer(marker);
   });
 }
 
-function clearMarkers(markerClusterGroup) {
-  markerClusterGroup.clearLayers();
+function clearMarkers() {
+  var layer = window.parksLayer;
+  if (layer) {
+    layer.clearLayers();
+  }
 }
 
 function initMap() {
@@ -138,14 +143,11 @@ function initMap() {
     maxZoom: 20
   }).addTo(map);
   
-  markerClusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 50,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: true,
-    zoomToBoundsOnClick: true
-  });
+  // Simple layer group instead of marker cluster for now
+  var parksLayer = L.layerGroup().addTo(map);
   
-  map.addLayer(markerClusterGroup);
+  // Store the layer for later use
+  window.parksLayer = parksLayer;
   
   loadParksForLocation(currentLocation);
   createLegend();
@@ -154,15 +156,22 @@ function initMap() {
 async function loadParksForLocation(location) {
   try {
     showLoading(true);
-    clearMarkers(markerClusterGroup);
+    clearMarkers();
     
     const parks = await getParksForLocation(location);
     
     if (parks.length > 0) {
-      addParksToMap(parks, markerClusterGroup);
+      addParksToMap(parks);
       
-      const group = new L.featureGroup(markerClusterGroup.getLayers());
-      map.fitBounds(group.getBounds().pad(0.1));
+      // Fit bounds to markers
+      var layers = [];
+      window.parksLayer.eachLayer(function(layer) {
+        layers.push(layer);
+      });
+      if (layers.length > 0) {
+        var group = L.featureGroup(layers);
+        map.fitBounds(group.getBounds().pad(0.1));
+      }
     } else {
       console.warn('No parks found for location:', location);
     }

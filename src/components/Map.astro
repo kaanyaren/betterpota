@@ -5,30 +5,30 @@
 <!-- Map container -->
 <div id="map"></div>
 
-<!-- Load Leaflet and MarkerCluster CSS -->
+<!-- Load Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<!-- Load scripts with async/defer and polling for L -->
+<!-- Load scripts -->
 <script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js"></script>
-<script is:inline src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script>
-<script is:inline src="/betterpota/map.js?v=11"></script>
+<script is:inline src="/betterpota/map.js?v=12"></script>
 
-<!-- Wait and initialize -->
+<!-- Initialize with polling -->
 <script is:inline>
   (function() {
     var attempts = 0;
-    var maxAttempts = 20;
+    var maxAttempts = 30;
     var interval = setInterval(function() {
       attempts++;
-      if (typeof window.initMap === 'function' && typeof L !== 'undefined') {
+      if (typeof window.initMap === 'function' && typeof L !== 'undefined' && L.map) {
         clearInterval(interval);
-        window.initMap();
-        console.log('Map initialized after', attempts, 'attempts');
+        try {
+          window.initMap();
+        } catch(e) {
+          console.error('initMap error:', e);
+        }
       } else if (attempts >= maxAttempts) {
         clearInterval(interval);
-        console.log('Max attempts reached, L:', typeof L, 'initMap:', typeof window.initMap);
+        console.log('Timeout - L:', typeof L, 'initMap:', typeof window.initMap);
       }
     }, 100);
   })();
