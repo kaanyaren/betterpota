@@ -12,22 +12,19 @@
 
 <!-- Load scripts with proper sequencing -->
 <script is:inline>
-  // Load Leaflet first
   (function() {
-    var script = document.createElement('script');
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    script.onload = function() {
-      // After Leaflet loads, load MarkerCluster  
-      var mcScript = document.createElement('script');
-      mcScript.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
-      mcScript.onload = function() {
-        // Finally load our map.js
-        var mapScript = document.createElement('script');
-        mapScript.src = '/betterpota/map.js';
-        document.head.appendChild(mapScript);
+    var leaflet = document.createElement('script');
+    leaflet.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js';
+    leaflet.onload = function() {
+      var mc = document.createElement('script');
+      mc.src = 'https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js';
+      mc.onload = function() {
+        var map = document.createElement('script');
+        map.src = '/betterpota/map.js';
+        document.head.appendChild(map);
       };
-      document.head.appendChild(mcScript);
+      document.head.appendChild(mc);
     };
-    document.head.appendChild(script);
+    document.head.appendChild(leaflet);
   })();
 </script>
