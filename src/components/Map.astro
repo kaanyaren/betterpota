@@ -13,14 +13,14 @@
 <!-- Load Leaflet and MarkerCluster JS -->
 <script type="module">
   // Load Leaflet and MarkerCluster, then initialize map
-  Promise.all([
-    import('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'),
-    import('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js')
-  ]).then(async () => {
+  import('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
+  .then(() => import('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js'))
+  .then(async () => {
     // Initialize map after dependencies are loaded
     const { initMap } = await import('/betterpota/assets/map.js');
     initMap();
-  }).catch(error => {
+  })
+  .catch(error => {
     console.error('Error loading map dependencies:', error);
   });
 </script>
