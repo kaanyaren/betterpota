@@ -230,8 +230,3 @@ function createLegend() {
 
 window.initMap = initMap;
 window.loadParksForLocation = loadParksForLocation;
-
-// Auto-initialize when script loads
-if (typeof L !== 'undefined' && L.map) {
-  initMap();
-}
