@@ -11,16 +11,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
 <!-- Load Leaflet and MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script type="module">
-  // Load Leaflet and MarkerCluster, then initialize map
-  import('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
-  .then(() => import('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js'))
-  .then(async () => {
-    // Initialize map after dependencies are loaded
-    const { initMap } = await import('/betterpota/assets/map.js');
-    initMap();
-  })
-  .catch(error => {
-    console.error('Error loading map dependencies:', error);
-  });
+  // Initialize map after Leaflet scripts have loaded
+  import { initMap } from '/betterpota/assets/map.js';
+  initMap();
 </script>
