@@ -10,22 +10,22 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-<!-- Load scripts - direct tags for reliability -->
-<script is:inline src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js"></script>
-<script is:inline src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script>
-<script is:inline src="/betterpota/map.js?v=7"></script>
+<!-- Load Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js"></script>
 
-<!-- Auto-init map after scripts load -->
-<script is:inline>
-  function initMapCallback() {
+<!-- Load MarkerCluster -->
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.min.js"></script>
+
+<!-- Load map.js with version 9 -->
+<script src="/betterpota/map.js?v=9"></script>
+
+<!-- Initialize map -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
     if (typeof window.initMap === 'function') {
       window.initMap();
-    } else if (typeof L !== 'undefined' && L.map) {
-      // Fallback: init directly if initMap not available yet
-      setTimeout(initMapCallback, 100);
     }
-  }
-  // Try to init immediately, then retry
-  initMapCallback();
-  setTimeout(initMapCallback, 1000);
+  }, 500);
+});
 </script>
