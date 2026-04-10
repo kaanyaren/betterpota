@@ -30,8 +30,10 @@ async function getParksByLocation(location) {
 }
 
 async function getParksForLocation(location) {
+  console.log('Fetching parks for location:', location);
   try {
     const parks = await getParksByLocation(location);
+    console.log('API parks response:', parks);
     const enriched = await Promise.all(
       parks.map(async (park) => {
         const stats = await getParkStats(park.reference);
@@ -47,10 +49,13 @@ async function getParksForLocation(location) {
         };
       })
     );
+    console.log('Enriched parks:', enriched);
     return enriched;
   } catch (error) {
     console.error('Error fetching parks from API, using fallback data:', error);
-    return getFallbackParks(location);
+    const fallback = getFallbackParks(location);
+    console.log('Using fallback parks:', fallback);
+    return fallback;
   }
 }
 
@@ -140,7 +145,9 @@ function clearMarkers() {
 }
 
 function initMap() {
+  console.log('initMap called, L available:', typeof L !== 'undefined');
   map = L.map('map').setView([39.8283, -98.5795], 4);
+  console.log('Map initialized');
   
   // CartoDB Voyager (light) basemap
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -163,10 +170,13 @@ async function loadParksForLocation(location) {
     showLoading(true);
     clearMarkers();
     
+    console.log('Loading parks for location:', location);
     const parks = await getParksForLocation(location);
+    console.log('Parks loaded:', parks.length, parks);
     
     if (parks.length > 0) {
       addParksToMap(parks);
+      console.log('Markers added to map');
       
       // Fit bounds to markers
       var layers = [];
@@ -176,6 +186,7 @@ async function loadParksForLocation(location) {
       if (layers.length > 0) {
         var group = L.featureGroup(layers);
         map.fitBounds(group.getBounds().pad(0.1));
+        console.log('Map bounds fitted to markers');
       }
     } else {
       console.warn('No parks found for location:', location);
