@@ -3,40 +3,41 @@
 const L = window.L;
 
 let map;
-let currentLocation = 'default';
+let currentLocation = 'all';
 
 const POTA_API = 'https://api.pota.app';
 
-async function getParkStats(reference) {
+async function getAllParks() {
   try {
-    const response = await fetch(`${POTA_API}/park/${reference}/stats`);
-    if (!response.ok) throw new Error('Failed to fetch park stats');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching park stats:', error);
-    return null;
-  }
-}
-
-async function getParksByLocation(location) {
-  try {
-    const response = await fetch(`${POTA_API}/location/${location}/parks`);
-    if (!response.ok) throw new Error('Failed to fetch parks by location');
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching parks by location:', error);
-    return [];
-  }
-}
-
-async function getParksForLocation(location) {
-  console.log('Fetching parks for location:', location);
-  try {
-    const parks = await getParksByLocation(location);
-    console.log('API parks response:', parks);
+    console.log('Fetching all parks from POTA API...');
+    const response = await fetch(`${POTA_API}/parks`);
+    if (!response.ok) throw new Error('Failed to fetch all parks');
+    const parks = await response.json();
+    console.log('All parks fetched:', parks.length);
+    
+    // Get stats for a sample of parks (to avoid too many API calls)
+    const sampleParks = parks.slice(0, 100); // Limit to first 100 for demo
     const enriched = await Promise.all(
-      parks.map(async (park) => {
-        const stats = await getParkStats(park.reference);
+      sampleParks.map(async (park) => {
+        try {
+          const statsResponse = await fetch(`${POTA_API}/park/${park.reference}/stats`);
+          if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            return {
+              reference: park.reference,
+              name: park.name,
+              latitude: park.latitude,
+              longitude: park.longitude,
+              grid: park.grid,
+              parktype: park.parktype,
+              activations: stats?.activations || 0,
+              qsos: stats?.qsos || 0
+            };
+          }
+        } catch (error) {
+          console.warn('Error fetching stats for park', park.reference, error);
+        }
+        // Return basic park info if stats fail
         return {
           reference: park.reference,
           name: park.name,
@@ -44,19 +45,27 @@ async function getParksForLocation(location) {
           longitude: park.longitude,
           grid: park.grid,
           parktype: park.parktype,
-          activations: stats?.activations || 0,
-          qsos: stats?.qsos || 0
+          activations: 0,
+          qsos: 0
         };
       })
     );
-    console.log('Enriched parks:', enriched);
-    return enriched;
+    
+    return enriched.filter(park => park !== null);
   } catch (error) {
-    console.error('Error fetching parks from API, using fallback data:', error);
-    const fallback = getFallbackParks(location);
-    console.log('Using fallback parks:', fallback);
-    return fallback;
+    console.error('Error fetching all parks from API:', error);
+    return getFallbackParks('all');
   }
+}
+
+async function getParksForLocation(location) {
+  console.log('Fetching parks for:', location);
+  if (location === 'all') {
+    return await getAllParks();
+  }
+  
+  // Fallback for other locations
+  return getFallbackParks(location);
 }
 
 function getMarkerColor(activations) {
@@ -162,7 +171,8 @@ function initMap() {
   window.parksLayer = parksLayer;
   
   // Add a test marker to verify markers work
-  var testMarker = L.marker([39.8283, -98.5795]).addTo(map)
+  var testIcon = createMarkerIcon(10, false);
+  var testMarker = L.marker([39.8283, -98.5795], { icon: testIcon }).addTo(map)
     .bindPopup('Test marker - if you see this, markers work!');
   
   loadParksForLocation(currentLocation);
@@ -254,7 +264,7 @@ function getFallbackParks(location) {
         qsos: 0
       }
     ],
-    'default': [
+    'all': [
       {
         reference: 'K-1000',
         name: 'Central Park',
@@ -284,11 +294,81 @@ function getFallbackParks(location) {
         parktype: 'National Park',
         activations: 85,
         qsos: 1780
+      },
+      {
+        reference: 'K-1003',
+        name: 'Yosemite National Park',
+        latitude: 37.8651,
+        longitude: -119.5383,
+        grid: 'CM09',
+        parktype: 'National Park',
+        activations: 95,
+        qsos: 2100
+      },
+      {
+        reference: 'K-1004',
+        name: 'Great Smoky Mountains National Park',
+        latitude: 35.6118,
+        longitude: -83.4895,
+        grid: 'EM84',
+        parktype: 'National Park',
+        activations: 78,
+        qsos: 1650
+      },
+      {
+        reference: 'K-1005',
+        name: 'Zion National Park',
+        latitude: 37.2982,
+        longitude: -113.0263,
+        grid: 'DM37',
+        parktype: 'National Park',
+        activations: 62,
+        qsos: 1340
+      },
+      {
+        reference: 'K-1006',
+        name: 'Rocky Mountain National Park',
+        latitude: 40.3428,
+        longitude: -105.6836,
+        grid: 'DM79',
+        parktype: 'National Park',
+        activations: 88,
+        qsos: 1920
+      },
+      {
+        reference: 'K-1007',
+        name: 'Acadia National Park',
+        latitude: 44.3386,
+        longitude: -68.2733,
+        grid: 'FN54',
+        parktype: 'National Park',
+        activations: 52,
+        qsos: 1100
+      },
+      {
+        reference: 'K-1008',
+        name: 'Everglades National Park',
+        latitude: 25.2866,
+        longitude: -80.8987,
+        grid: 'EL97',
+        parktype: 'National Park',
+        activations: 34,
+        qsos: 720
+      },
+      {
+        reference: 'K-1009',
+        name: 'Glacier National Park',
+        latitude: 48.7596,
+        longitude: -113.7870,
+        grid: 'DN47',
+        parktype: 'National Park',
+        activations: 41,
+        qsos: 890
       }
     ]
   };
   
-  return fallbackData[location] || fallbackData['default'];
+  return fallbackData[location] || fallbackData['all'];
 }
 
 function createLegend() {
