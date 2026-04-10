@@ -6,10 +6,10 @@
   <script>
     // GitHub Pages SPA workaround
     const pathSegments = window.location.pathname.split('/');
-    const basePath = '/better-pota';
+    const basePath = '/betterpota';
     
     // Check if we're in a subpath that should be handled by the SPA
-    if (pathSegments.length > 2 && pathSegments[1] === 'better-pota') {
+    if (pathSegments.length > 2 && pathSegments[1] === 'betterpota') {
       // Redirect to the main page with hash-based routing
       window.location.replace(basePath + '/#' + pathSegments.slice(2).join('/'));
     } else {
