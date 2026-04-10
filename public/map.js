@@ -5,15 +5,25 @@ const L = window.L;
 let map;
 let currentLocation = 'all';
 
-const POTA_API = 'https://api.pota.app';
-
 async function getAllParks() {
   try {
-    console.log('Fetching all parks from POTA API...');
+    // Try to load the Convex client module
+    if (typeof window.getAllParksFromConvex === 'function') {
+      console.log('Using Convex backend for parks data...');
+      const parks = await window.getAllParksFromConvex();
+      if (parks && parks.length > 0) {
+        console.log('Successfully fetched parks from Convex:', parks.length);
+        return parks;
+      }
+    }
+    
+    // Fallback to direct POTA API if Convex fails
+    console.log('Falling back to direct POTA API...');
+    const POTA_API = 'https://api.pota.app';
     const response = await fetch(`${POTA_API}/parks`);
     if (!response.ok) throw new Error('Failed to fetch all parks');
     const parks = await response.json();
-    console.log('All parks fetched:', parks.length);
+    console.log('All parks fetched from POTA API:', parks.length);
     
     // Get stats for a sample of parks (to avoid too many API calls)
     const sampleParks = parks.slice(0, 100); // Limit to first 100 for demo
@@ -53,7 +63,7 @@ async function getAllParks() {
     
     return enriched.filter(park => park !== null);
   } catch (error) {
-    console.error('Error fetching all parks from API:', error);
+    console.error('Error fetching all parks:', error);
     return getFallbackParks('all');
   }
 }
