@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#86d7ad",
+                    "secondary-container": "#a1f4c8",
+                    "tertiary": "#005413",
+                    "inverse-on-surface": "#d7f9e4",
+                    "on-primary-container": "#a8e7c5",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-dim": "#c1e2ce",
+                    "surface-container-low": "#dafce7",
+                    "on-background": "#032014",
+                    "on-primary": "#ffffff",
+                    "surface-container": "#d4f6e1",
+                    "outline-variant": "#bfc9c1",
+                    "on-tertiary-fixed-variant": "#005313",
+                    "surface-variant": "#c9ead6",
+                    "surface-bright": "#e8ffef",
+                    "on-secondary-fixed-variant": "#005236",
+                    "on-secondary-container": "#1b724f",
+                    "on-primary-fixed": "#002114",
+                    "on-secondary": "#ffffff",
+                    "secondary": "#116c4a",
+                    "on-tertiary-fixed": "#002204",
+                    "tertiary-fixed-dim": "#63df68",
+                    "surface-tint": "#2c694e",
+                    "inverse-primary": "#95d4b3",
+                    "tertiary-container": "#006f1c",
+                    "tertiary-fixed": "#80fd81",
+                    "inverse-surface": "#193628",
+                    "surface-container-highest": "#c9ead6",
+                    "surface-container-high": "#cff0dc",
+                    "secondary-fixed": "#a1f4c8",
+                    "primary-container": "#2d6a4f",
+                    "on-tertiary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#b1f0ce",
+                    "on-surface-variant": "#404943",
+                    "primary": "#0f5238",
+                    "outline": "#707973",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#002113",
+                    "background": "#e8ffef",
+                    "on-primary-fixed-variant": "#0e5138",
+                    "primary-fixed-dim": "#95d4b3",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#77f479",
+                    "surface": "#e8ffef",
+                    "on-surface": "#032014",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk", "sans-serif"],
+                    "body": ["Manrope", "sans-serif"],
+                    "label": ["Manrope", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-gradient {
+            background: linear-gradient(135deg, #0f5238 0%, #2d6a4f 100%);
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-background antialiased">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#e8ffef]/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(3,32,20,0.06)]">
+<div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+<span class="text-xl font-headline font-bold text-primary uppercase tracking-wider">POTA ON THE GO</span>
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-secondary font-headline tracking-tight hover:opacity-80 transition-all duration-300" href="#features">Features</a>
+<a class="text-secondary font-headline tracking-tight hover:opacity-80 transition-all duration-300" href="#screenshots">Screenshots</a>
+<a class="text-secondary font-headline tracking-tight hover:opacity-80 transition-all duration-300" href="#how-it-works">How it Works</a>
+<a class="text-secondary font-headline tracking-tight hover:opacity-80 transition-all duration-300" href="#support">Support</a>
+<button class="signature-gradient text-white px-6 py-2 rounded-full font-headline font-bold uppercase tracking-widest text-sm scale-95 active:scale-90 transition-transform">
+                    Get App
+                </button>
+</div>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</nav>
+<main>
+<!-- Hero Section - Reduced padding-bottom -->
+<section class="relative min-h-[80vh] flex items-center pb-12 overflow-hidden bg-surface pt-20">
+<div class="absolute inset-0 z-0 opacity-10">
+<img class="w-full h-full object-cover" data-alt="atmospheric wide shot of dense misty pine forest with sun rays filtering through high canopy providing natural organic textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAB3oewrsDgxBXwqEl6Q_agG1fGZe7o23yUk87886HwsUKsjJ90tBEZ2-ke9OnyhmUtHxJ8app_mlbv1TCuErZXMS82XQ5LhTVsxyWvv8TIt6-Cs8lst287B5JBtouH8OoBc9JYGSfOCVmTkqHd0zPROuLTQ7ZMwqS6obYGQUssadvFwYVTVl5WtTCVm1izNX60FN71GN1F3DwazPi2XPE6036KwaBFAWvEUUR6NFUzC9hOfJATw1MTr66tUpYcwdtenP0JSdAx6mM"/>
+</div>
+<div class="max-w-7xl mx-auto px-8 w-full relative z-10 grid md:grid-cols-2 gap-12 items-center">
+<div class="space-y-6">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-widest uppercase">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+                        Premium Field Logging
+                    </div>
+<h1 class="text-6xl md:text-7xl lg:text-8xl font-headline font-bold tracking-tighter text-on-background leading-[0.9]">
+                        Your ultimate <span class="text-primary">companion</span> for Parks on the Air.
+                    </h1>
+<p class="text-xl text-on-surface-variant max-w-lg leading-relaxed">
+                        Track live spots, discover activations, and log your amateur radio field operations with technical precision and organic beauty.
+                    </p>
+<div class="flex flex-wrap gap-4 pt-2 items-center">
+<a class="inline-block hover:opacity-80 transition-opacity" href="#">
+<img alt="Get it on Google Play" class="h-12 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ADBb0uicXjj3ZV6gJvKLTFDyDf3v65J06kyhohgfjXaYmjDkwz3Wq6ZUsn8t-LcmBvzR_dx4OljHO9IKulH0xOnaERY8JIgAg-bBAyeRkDpr2uAGvhmqnWy4AapqOlgjmRV_0C5swxrtngcyoQWZR88IqwqfvNvfVdPmWQN6QTnma0s7_ItGmOHTkgNx7nfPg3DeX_PUiwVLll2_GPm4RDUoIQ1Q239ouMvm0y8mGb79ht9dmXCWcRQrswf5p3LP0BROcs8x_lkSX7H5Rg"/>
+</a>
+<a class="inline-block hover:opacity-80 transition-opacity" href="#">
+<img alt="Download on the App Store" class="h-12 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ADBb0uirYQUYSWZhQhZ9DnP-dhBZlXg-2AD1LYs68Tp6sPpJgsVSFRsKpYa3Whe9y_oP5SiOY03OH0YndHf7OteuTGAnSImZdyUpJiCJ-xEXVsfnNSwWGEaVu58RNZG6Cy9RFuS794HvNM1EBgaDJDHpSpvsnzhgvBoFUGkvqvrREhrdX0xbzj9yXAomPvADz8-HIq83BZZEK1LL2dXuchx5rRL9rMUteU0iCxRhSGyvYp_E4AxcNh9PY-Ap2rrmHVzZZz8fZZ5NcSU1"/>
+</a>
+</div>
+</div>
+<div class="relative hidden md:block">
+<div class="absolute -inset-10 bg-primary/5 rounded-full blur-3xl"></div>
+<img class="relative z-10 w-4/5 mx-auto rounded-[3rem] shadow-2xl border-8 border-on-background/5" data-alt="modern smartphone mockup displaying a clean ham radio activation logging interface with green accents against soft outdoor background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiMZELBEj778csnC1IeZpax4Qp-j-C_mCpPrOOvzzse2QEVhPv9eBOJi5TOGvrthWGALUF0wS3wBM4WVkS24-_T1z57TtPAeeMYpE7wNktZNNCZUXezqUtROHfRZCUVJvHvJDEr97V91zLPCm3WB-jGkuTdRGnhstaIsuaDScTgxDqfTX7gWv4rFGTlAH6Uw_IuQ0oPsD45USB4CD5g7iDMmLZRSLResxigm0nrzlFVlRQTt7elpvvrWHWAdw0-UcPe_b6QBjuCNw"/>
+</div>
+</div>
+</section>
+<!-- Value Proposition - Reduced py -->
+<section class="bg-surface-container-low py-10">
+<div class="max-w-7xl mx-auto px-8">
+<div class="grid md:grid-cols-3 gap-12">
+<div class="space-y-3">
+<h2 class="text-3xl font-headline font-bold text-primary">Built for the field</h2>
+<p class="text-on-surface-variant leading-relaxed">Designed for high-glare environments and one-handed operation while adjusting your antenna in the wild.</p>
+</div>
+<div class="space-y-3">
+<h2 class="text-3xl font-headline font-bold text-primary">Organic Precision</h2>
+<p class="text-on-surface-variant leading-relaxed">A bespoke interface that feels like a professional field journal, balancing technical data with human-centric design.</p>
+</div>
+<div class="space-y-3">
+<h2 class="text-3xl font-headline font-bold text-primary">Zero Latency</h2>
+<p class="text-on-surface-variant leading-relaxed">Instant spot updates and offline-first logging capabilities to ensure you never lose a single contact in remote areas.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Feature Showcase (Bento Grid) - Reduced py -->
+<section class="bg-surface py-14" id="features">
+<div class="max-w-7xl mx-auto px-8">
+<div class="mb-12">
+<h2 class="text-5xl font-headline font-bold tracking-tight">Everything you need</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Feature Card 1 -->
+<div class="md:col-span-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col justify-between group overflow-hidden relative">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-4xl text-primary mb-6" style="font-variation-settings: 'FILL' 1;">explore</span>
+<h3 class="text-3xl font-headline font-bold mb-4">Park Discovery</h3>
+<p class="text-on-surface-variant max-w-xs">Explore thousands of POTA entities with detailed offline maps and activation history.</p>
+</div>
+<div class="mt-8 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+<img class="rounded-xl shadow-lg" data-alt="top down view of a topographic map with custom green location pins marking radio activation parks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATC8XQgQVT8WWyRPUawmygZcJRgOcMPxUxb_P3CA0k-M7myvEnZ5CXc5X97ojYwBRqiVVcwK_PVQMIHNguW8LFxS4PEevn9J6xbaB4pz-HtsPdyiMBTv0IsnogN6ojHoAoS-1eiJFCJeQyUyVyXGDM7kWWGCD3USpy_pmfhgVcZ6v7M8uraw_eD8o7RSX499noovWoGgS2jVHGnanxp9yCZlgZh75QrSImyEE-8jEH9ZRco90jD4WSguDQjGixKhm_wOxU1mOAdr0"/>
+</div>
+</div>
+<!-- Feature Card 2 -->
+<div class="md:col-span-2 bg-primary text-white p-10 rounded-xl flex flex-col justify-between overflow-hidden">
+<div>
+<span class="material-symbols-outlined text-4xl text-secondary-fixed mb-6">sensors</span>
+<h3 class="text-3xl font-headline font-bold mb-4">Live Spot Monitoring</h3>
+<p class="text-primary-fixed/80 max-w-xs">Real-time alerts for the parks you're watching. Filter by band, mode, or callsign instantly.</p>
+</div>
+<div class="bg-surface-container-lowest/10 backdrop-blur-md p-6 rounded-xl mt-8 border border-white/10">
+<div class="flex items-center justify-between mb-4">
+<div class="h-2 w-24 bg-white/20 rounded"></div>
+<div class="h-2 w-8 bg-tertiary-fixed rounded"></div>
+</div>
+<div class="space-y-3">
+<div class="h-1 w-full bg-white/10 rounded"></div>
+<div class="h-1 w-2/3 bg-white/10 rounded"></div>
+</div>
+</div>
+</div>
+<!-- Feature Card 3 -->
+<div class="md:col-span-1 bg-surface-container-high p-8 rounded-xl space-y-4">
+<span class="material-symbols-outlined text-3xl text-primary">edit_note</span>
+<h4 class="text-xl font-headline font-bold">Activation Logging</h4>
+<p class="text-sm text-on-surface-variant">Seamless ADIF exporting and instant POTA.app sync for effortless record keeping.</p>
+</div>
+<!-- Feature Card 4 -->
+<div class="md:col-span-1 bg-surface-container-high p-8 rounded-xl space-y-4">
+<span class="material-symbols-outlined text-3xl text-primary">notifications_active</span>
+<h4 class="text-xl font-headline font-bold">Watchlist Alerts</h4>
+<p class="text-sm text-on-surface-variant">Smart push notifications that only wake you up for the operators and parks you care about.</p>
+</div>
+<!-- Feature Card 5 -->
+<div class="md:col-span-2 bg-surface-container-highest p-8 rounded-xl flex items-center gap-8">
+<div class="flex-1">
+<h4 class="text-xl font-headline font-bold mb-2">Solar Conditions</h4>
+<p class="text-sm text-on-surface-variant">Real-time band propagation forecasts integrated directly into your spotting dashboard.</p>
+</div>
+<div class="w-24 h-24 rounded-full border-4 border-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary">wb_sunny</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Screenshot Gallery - Reduced py -->
+<section class="bg-surface-container-low overflow-hidden py-14" id="screenshots">
+<div class="max-w-7xl mx-auto px-8">
+<div class="text-center mb-12">
+<h2 class="text-5xl font-headline font-bold mb-4">Designed for the Field</h2>
+<p class="text-xl text-on-surface-variant max-w-2xl mx-auto">High-contrast, large touch targets, and a workflow that keeps your eyes on the terrain.</p>
+</div>
+<div class="flex gap-8 overflow-x-auto pb-12 snap-x no-scrollbar">
+<div class="snap-center shrink-0 w-72 h-[600px] bg-white rounded-[2.5rem] shadow-xl border-[12px] border-on-background relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="UI screenshot showing a map with green markers and a slide-up panel detailing a park activation" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz_lbH-TssEHrv620L58gFKV1_F8zXPIdY5UjaU2GGCjWrgZRQxaA5QCd2zz2GN-_2oLjy9rYSh4w7l3in_LjcIffrbkpPSf7BAB5cXTaPXKphUchq0thLdLeyDvSZoYqCMHzdFix2X46lNXfh00ABp9KHtyYEaVHHRAQKiQtIk9fjPz1vHzwptWDSO9ZPkFkdt13METId0-uZ4IOgXLqJxZq-QWd1-Oe83Z5jVhrDjnwV4m-_GWxL_xLIuGmRzVwp07qM2BBl4Ug"/>
+</div>
+<div class="snap-center shrink-0 w-72 h-[600px] bg-white rounded-[2.5rem] shadow-xl border-[12px] border-on-background relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="UI screenshot of a radio contact log entry screen with large buttons and green number input field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxL0AaAXuCaiFNTyyqGWDlixURf_3oMhL4d77n1dYogGlVxMifbwNiYWAxWmbdRIYmtotDFXWOQTx00J9EV-6lM5f3T6G3Xsl5_W2DBR1sIz9YrCndzmvbdA8_Aw3tvaR8vaFZiOKrKJFef-bG7OXcTIJTsQsu_XkaCD85dfMbRRbstVG90yeg1H8yJ7lmppA9PcwoXa31qmT7qxTlCDXN8fiDoio-Fzdx9eZ3-CiLp3SpPbYzD-NNZSFDv_MzaboRO9ktGJFfUvo"/>
+</div>
+<div class="snap-center shrink-0 w-72 h-[600px] bg-white rounded-[2.5rem] shadow-xl border-[12px] border-on-background relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="UI screenshot showing a dashboard of live amateur radio spots with callsigns and signal reports" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvWX3vMFQ388TMACXZpyVPYG-yS75PozV9v32kO39bcUL2e_8cTw2wBzNydxo1eW0jSdnDu1zUvkG3ulL6xavf9BdzOh5Mj1lHabbpSjhXmsZZWXn7iJBGnJF4cM463axAf6Dh3wMH7OQVLyobFjmX5_mtVf1ntvsUC-uUWUNHZWWzyvTgRfwIzALwuE2YGdfJIvZ2vQxo1asFlnzbekj3y2hBEAVGVPqv-r93eA6H9hw4CZeCFYEfRBSxxNk2FOi89PNhM2abR28"/>
+</div>
+<div class="snap-center shrink-0 w-72 h-[600px] bg-white rounded-[2.5rem] shadow-xl border-[12px] border-on-background relative overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="UI screenshot showing user profile with radio activation statistics and a gallery of park badges" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_dMsjrsqWQW7oK3yz8p_cF56MtrJ2ax9CsO1lTZFnVPub2VUe1va4ESXELij7nFL65rTV18dtFREmlLUQ6CWw8EDBXeURLGl_09VjCSlybclfa8nlUGLCC03qU1A1Z_rUiOem5KloXiEC5RBDqcyvBmBwpn4zQJR65RWmfnFWx8bIKjOhSf-v7F-N00C-6gtLCmiFEUQVSt-mF_UIV4ed4lYEzcJerFLGFZDoKYJIb7LFZb7XdIeq1FmS14cbMzpwHYcjIzE2Ztg"/>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works - Reduced py -->
+<section class="bg-surface py-14" id="how-it-works">
+<div class="max-w-7xl mx-auto px-8">
+<div class="flex flex-col md:flex-row gap-12 items-center">
+<div class="md:w-1/2">
+<h2 class="text-6xl font-headline font-bold text-on-background mb-8 leading-tight">Simple. <br/>Reliable. <br/>Essential.</h2>
+<div class="space-y-10">
+<div class="flex gap-6">
+<span class="text-4xl font-headline font-bold text-primary/30">01</span>
+<div>
+<h4 class="text-2xl font-headline font-bold mb-1">Find your park</h4>
+<p class="text-on-surface-variant">Browse the map or search entities to find the perfect location for your next activation.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<span class="text-4xl font-headline font-bold text-primary/30">02</span>
+<div>
+<h4 class="text-2xl font-headline font-bold mb-1">Operate with ease</h4>
+<p class="text-on-surface-variant">Quick-log QSOs with predictive text and automatic UTC timing. Monitor your signal strength real-time.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<span class="text-4xl font-headline font-bold text-primary/30">03</span>
+<div>
+<h4 class="text-2xl font-headline font-bold mb-1">Log and Upload</h4>
+<p class="text-on-surface-variant">Export your ADIF files or sync directly with POTA.app to share your achievement with the world.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="md:w-1/2 w-full">
+<div class="aspect-square rounded-xl bg-surface-container-high relative overflow-hidden">
+<img class="w-full h-full object-cover opacity-80" data-alt="close up of amateur radio operator hands adjusting frequency on a rugged field transceiver in a forest setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVAPMXZDTvaZID3UA50svgzbvqr3A9T5ni8GcSibpGM1pugFxxTsES0lc9SpRDS8K8ryGxsyqv8wiA7VkCiK1MMKoe0vJSGYkj4VcYYqh4itJuZ1F1E7R_sBBjT3_zvutprRwtPQ6XixQQIqPx4nwQJiFbCAXDMT3f1ADa1I_XTFKlAteBta81-GsKu-G_nFPqG7oJF-BJcvaOPxmqmwjiceBLF3tm8-TXp6xiATKuyeUhmYOFMfN8aET79P7LT9TTMF7HpD_NMOY"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA - Reduced py -->
+<section class="px-8 py-12">
+<div class="max-w-7xl mx-auto signature-gradient rounded-xl p-12 text-center relative overflow-hidden">
+<div class="absolute top-0 right-0 p-12 opacity-10">
+<span class="material-symbols-outlined text-[200px]" style="font-variation-settings: 'FILL' 1;">wifi_tethering</span>
+</div>
+<div class="relative z-10">
+<h2 class="text-5xl md:text-6xl font-headline font-bold text-white mb-6 tracking-tighter">Ready to activate?</h2>
+<p class="text-on-primary-container text-lg mb-10 max-w-xl mx-auto">Join thousands of operators using POTA ON THE GO to simplify their field operations.</p>
+<div class="flex flex-wrap justify-center gap-6 items-center">
+<a class="inline-block hover:scale-105 transition-transform" href="#">
+<img alt="Get it on Google Play" class="h-12 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ADBb0uicXjj3ZV6gJvKLTFDyDf3v65J06kyhohgfjXaYmjDkwz3Wq6ZUsn8t-LcmBvzR_dx4OljHO9IKulH0xOnaERY8JIgAg-bBAyeRkDpr2uAGvhmqnWy4AapqOlgjmRV_0C5swxrtngcyoQWZR88IqwqfvNvfVdPmWQN6QTnma0s7_ItGmOHTkgNx7nfPg3DeX_PUiwVLll2_GPm4RDUoIQ1Q239ouMvm0y8mGb79ht9dmXCWcRQrswf5p3LP0BROcs8x_lkSX7H5Rg"/>
+</a>
+<a class="inline-block hover:scale-105 transition-transform" href="#">
+<img alt="Download on the App Store" class="h-12 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ADBb0uirYQUYSWZhQhZ9DnP-dhBZlXg-2AD1LYs68Tp6sPpJgsVSFRsKpYa3Whe9y_oP5SiOY03OH0YndHf7OteuTGAnSImZdyUpJiCJ-xEXVsfnNSwWGEaVu58RNZG6Cy9RFuS794HvNM1EBgaDJDHpSpvsnzhgvBoFUGkvqvrREhrdX0xbzj9yXAomPvADz8-HIq83BZZEK1LL2dXuchx5rRL9rMUteU0iCxRhSGyvYp_E4AxcNh9PY-Ap2rrmHVzZZz8fZZ5NcSU1"/>
+</a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#dafce7] py-16 px-8">
+<div class="max-w-7xl mx-auto">
+<div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
+<div>
+<span class="text-2xl font-headline font-bold text-primary tracking-widest uppercase mb-4 block">POTA ON THE GO</span>
+<p class="text-on-surface-variant max-w-xs leading-relaxed font-body text-sm">
+                        Amateur Radio Field Operations. The only tool you need for your next activation journey.
+                    </p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-12">
+<div class="space-y-4">
+<h5 class="font-headline font-bold text-primary uppercase text-xs tracking-widest">Resources</h5>
+<ul class="space-y-3">
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">Operator Resources</a></li>
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">GitHub Repo</a></li>
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">Beta Program</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="font-headline font-bold text-primary uppercase text-xs tracking-widest">Support</h5>
+<ul class="space-y-3">
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">Contact Support</a></li>
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">Documentation</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="font-headline font-bold text-primary uppercase text-xs tracking-widest">Legal</h5>
+<ul class="space-y-3">
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">Privacy Policy</a></li>
+<li><a class="text-secondary opacity-70 hover:opacity-100 transition-opacity text-sm" href="#">Terms of Service</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-secondary opacity-70 text-sm font-body">© 2024 POTA ON THE GO. Amateur Radio Field Operations.</p>
+<div class="flex gap-6">
+<a class="text-primary hover:text-secondary-fixed-dim transition-colors" href="#">
+<span class="material-symbols-outlined">rss_feed</span>
+</a>
+<a class="text-primary hover:text-secondary-fixed-dim transition-colors" href="#">
+<span class="material-symbols-outlined">forum</span>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>
