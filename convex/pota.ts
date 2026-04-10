@@ -1,5 +1,6 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, httpAction } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 
 // Cache structure for POTA data
 export const getParks = query({
@@ -128,4 +129,60 @@ export const getAllParksWithStats = query({
       return parks?.parks || [];
     }
   },
+});
+
+// HTTP actions for external access
+export const getAllParksWithStatsHttp = httpAction(async (ctx, request) => {
+  const parks = await ctx.runQuery(api.pota.getAllParksWithStats);
+  
+  return new Response(JSON.stringify(parks), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+});
+
+export const getParksHttp = httpAction(async (ctx, request) => {
+  const parks = await ctx.runQuery(api.pota.getParks);
+  
+  return new Response(JSON.stringify(parks), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+});
+
+export const getParkStatsHttp = httpAction(async (ctx, request) => {
+  const url = new URL(request.url);
+  const reference = url.searchParams.get("reference");
+  
+  if (!reference) {
+    return new Response(JSON.stringify({ error: "Reference parameter required" }), {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
+  
+  const stats = await ctx.runQuery(api.pota.getParkStats, { reference });
+  
+  return new Response(JSON.stringify(stats), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 });

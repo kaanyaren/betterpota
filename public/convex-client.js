@@ -26,7 +26,11 @@ async function convexQuery(action, args = {}) {
 async function getAllParksFromConvex() {
   try {
     console.log('Fetching parks from Convex backend...');
-    const result = await convexQuery('getAllParksWithStats');
+    const response = await fetch(`${CONVEX_URL}/getAllParksWithStatsHttp`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
     console.log('Parks from Convex:', result.length);
     return result;
   } catch (error) {
@@ -38,7 +42,11 @@ async function getAllParksFromConvex() {
 async function getParksFromConvex() {
   try {
     console.log('Fetching parks from Convex...');
-    const result = await convexQuery('getParks');
+    const response = await fetch(`${CONVEX_URL}/getParksHttp`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
     console.log('Parks from Convex:', result.length);
     return result;
   } catch (error) {
@@ -49,7 +57,11 @@ async function getParksFromConvex() {
 
 async function getParkStatsFromConvex(reference) {
   try {
-    const result = await convexQuery('getParkStats', { reference });
+    const response = await fetch(`${CONVEX_URL}/getParkStatsHttp?reference=${encodeURIComponent(reference)}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
     return result;
   } catch (error) {
     console.error('Failed to fetch park stats from Convex:', error);
