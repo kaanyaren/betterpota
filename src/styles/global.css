@@ -27,11 +27,15 @@ body {
 
 /* Blinking animation for unactivated parks */
 @keyframes blink {
-  0%, 100% { opacity: 0.3; }
+  0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
 
 .blinking-marker {
+  animation: blink 1s infinite;
+}
+
+.legend-color.blinking {
   animation: blink 1s infinite;
 }
 

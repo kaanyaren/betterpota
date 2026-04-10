@@ -4,8 +4,8 @@ const L = window.L;
 
 let map;
 let ciLayer;
-let locationsIndex = [];
-const loadedLocations = new Set();
+let programsIndex = [];
+const loadedPrograms = new Set();
 const parksByReference = new Map();
 let loadingInProgress = false;
 let debounceTimer = null;
@@ -18,71 +18,104 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function loadLocationsIndex() {
+async function loadProgramsIndex() {
   try {
     const programs = await fetchJson('https://api.pota.app/programs/locations');
-    const locations = [];
+    const programData = [];
     for (const program of programs) {
-      for (const entity of program.entities || []) {
-        for (const loc of entity.locations || []) {
-          if (loc.parks > 0 && loc.latitude != null && loc.longitude != null) {
-            locations.push({
-              descriptor: loc.descriptor,
-              lat: loc.latitude,
-              lon: loc.longitude,
-              parkCount: loc.parks,
-            });
-          }
-        }
+      if (program.prefix && program.prefix.length === 2) {
+        programData.push({
+          prefix: program.prefix,
+          name: program.name,
+          parkCount: program.parks || 0,
+        });
       }
     }
-    console.log('Location index built:', locations.length, 'locations');
-    return locations;
+    console.log('Programs index built:', programData.length, 'programs');
+    return programData;
   } catch (error) {
-    console.error('Failed to load locations index:', error);
+    console.error('Failed to load programs index:', error);
     return [];
   }
 }
 
-function getLocationsInViewport() {
+function getProgramsInViewport() {
   const bounds = map.getBounds();
-  const result = [];
-  for (const loc of locationsIndex) {
-    if (bounds.contains(L.latLng(loc.lat, loc.lon))) {
-      result.push(loc);
+  const center = bounds.getCenter();
+  
+  // Group programs by continent/region based on map center
+  const programs = [];
+  
+  if (bounds.contains([39.8283, -98.5795])) {
+    // North America
+    programs.push('US', 'CA', 'MX', 'K');
+  }
+  if (bounds.contains([48.8566, 2.3522])) {
+    // Europe
+    programs.push('F', 'G', 'DL', 'I', 'EA', 'CT', 'HA', 'OK', 'OM', 'OE', 'PA', 'SM', 'SP', 'YL');
+  }
+  if (bounds.contains([-25.2744, 133.7751])) {
+    // Australia/Oceania
+    programs.push('VK', 'ZL', 'ZD', 'ZK');
+  }
+  if (bounds.contains([35.6762, 139.6503])) {
+    // Asia
+    programs.push('JA', 'HL', 'HS', 'BY', 'BV', 'VR', 'VU', '9V', 'V8');
+  }
+  if (bounds.contains([-14.2350, -51.9253])) {
+    // South America
+    programs.push('LU', 'PY', 'CE', 'CX', 'CP');
+  }
+  if (bounds.contains([-8.7832, 34.5085])) {
+    // Africa
+    programs.push('ZS', '5B', 'SU', 'ST', '5T', '5U', '5V', '5X', '5Y', '9J', '9L', '9Q');
+  }
+  
+  // Add any other programs that are in the viewport
+  const allPrograms = ['US', 'CA', 'F', 'G', 'VK', 'JA', 'DL', 'I', 'EA', 'LU', 'ZS', 'PY', 'MX', 'K', 'CT', 'HA', 'OK', 'OM', 'OE', 'PA', 'SM', 'SP', 'YL', 'ZL', 'ZD', 'ZK', 'HL', 'HS', 'BY', 'BV', 'VR', 'VU', '9V', 'V8', 'CE', 'CX', 'CP', '5B', 'SU', 'ST', '5T', '5U', '5V', '5X', '5Y', '9J', '9L', '9Q'];
+  
+  for (const prefix of allPrograms) {
+    if (!programs.includes(prefix) && programsIndex.some(p => p.prefix === prefix)) {
+      programs.push(prefix);
     }
   }
-  return result;
+  
+  return programs;
 }
 
 async function loadParksForViewport() {
-  if (loadingInProgress || locationsIndex.length === 0) return;
+  if (loadingInProgress || programsIndex.length === 0) return;
 
-  const visibleLocations = getLocationsInViewport();
-  const newLocations = visibleLocations.filter(
-    (loc) => !loadedLocations.has(loc.descriptor)
+  const visiblePrograms = getProgramsInViewport();
+  const newPrograms = visiblePrograms.filter(
+    (prefix) => !loadedPrograms.has(prefix)
   );
 
-  if (newLocations.length === 0) return;
+  if (newPrograms.length === 0) return;
 
   loadingInProgress = true;
   showLoading(true);
   updateParkCounter();
 
   try {
-    const BATCH_CONCURRENCY = 6;
+    const BATCH_CONCURRENCY = 3;
     let nextIndex = 0;
 
     async function worker() {
-      while (nextIndex < newLocations.length) {
+      while (nextIndex < newPrograms.length) {
         const idx = nextIndex++;
-        const loc = newLocations[idx];
-        loadedLocations.add(loc.descriptor);
+        const prefix = newPrograms[idx];
+        loadedPrograms.add(prefix);
 
         try {
           const parks = await fetchJson(
-            `https://api.pota.app/location/parks/${encodeURIComponent(loc.descriptor)}`
+            `https://api.pota.app/program/parks/${encodeURIComponent(prefix)}`
           );
+          console.log(`Loaded ${parks.length} parks for program ${prefix}`);
+          
+          let parksAdded = 0;
+          const bounds = map.getBounds();
+          
           for (const park of parks) {
             const latitude = Number(park.latitude);
             const longitude = Number(park.longitude);
@@ -91,28 +124,34 @@ async function loadParksForViewport() {
             const ref = park.reference;
             if (parksByReference.has(ref)) continue;
 
-            const parkData = {
-              reference: ref,
-              name: park.name,
-              latitude,
-              longitude,
-              grid: park.grid,
-              parktype: park.parktype || park.locationDesc || 'Park',
-              activations: Number(park.activations) || 0,
-              qsos: Number(park.qsos) || 0,
-            };
+            // Only add parks that are in the current viewport
+            if (bounds.contains(L.latLng(latitude, longitude))) {
+              const parkData = {
+                reference: ref,
+                name: park.name,
+                latitude,
+                longitude,
+                grid: park.grid,
+                parktype: park.parktype || park.locationDesc || 'Park',
+                activations: Number(park.activations) || 0,
+                qsos: Number(park.qsos) || 0,
+              };
 
-            parksByReference.set(ref, parkData);
-            addParkToCanvas(parkData);
+              parksByReference.set(ref, parkData);
+              addParkToCanvas(parkData);
+              parksAdded++;
+            }
           }
+          
+          console.log(`Added ${parksAdded} parks to map for program ${prefix}`);
         } catch (error) {
-          console.warn(`Failed loading location ${loc.descriptor}:`, error);
+          console.warn(`Failed loading program ${prefix}:`, error);
         }
       }
     }
 
     await Promise.all(
-      Array.from({ length: Math.min(BATCH_CONCURRENCY, newLocations.length) }, worker)
+      Array.from({ length: Math.min(BATCH_CONCURRENCY, newPrograms.length) }, worker)
     );
 
     updateParkCounter();
@@ -132,7 +171,7 @@ function onMapMoveEnd() {
 }
 
 function getMarkerColor(activations) {
-  if (activations === 0) return '#FFD700';
+  if (activations === 0) return '#8B5CF6'; // Purple for unactivated
   if (activations <= 4) return '#FF4444';
   if (activations <= 14) return '#FF8800';
   if (activations <= 29) return '#FFCC00';
@@ -156,7 +195,7 @@ function addParkToCanvas(park) {
 
   const color = getMarkerColor(park.activations);
   const icon = L.icon({
-    iconUrl: createCircleDataUrl(color),
+    iconUrl: createCircleDataUrl(color, park.activations === 0),
     iconSize: [12, 12],
     iconAnchor: [6, 6],
   });
@@ -166,7 +205,7 @@ function addParkToCanvas(park) {
   ciLayer.addMarker(marker);
 }
 
-function createCircleDataUrl(color) {
+function createCircleDataUrl(color, isBlinking = false) {
   const size = 12;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -178,9 +217,20 @@ function createCircleDataUrl(color) {
   ctx.arc(r, r, r - 1.5, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
+  
+  // Add a white border for better visibility
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 1.5;
   ctx.stroke();
+  
+  // For blinking markers, add a pulsing effect
+  if (isBlinking) {
+    ctx.beginPath();
+    ctx.arc(r, r, r - 0.5, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
 
   return canvas.toDataURL();
 }
@@ -246,8 +296,8 @@ function initMap() {
 
   (async function () {
     showLoading(true);
-    locationsIndex = await loadLocationsIndex();
-    if (locationsIndex.length > 0) {
+    programsIndex = await loadProgramsIndex();
+    if (programsIndex.length > 0) {
       await loadParksForViewport();
     } else {
       await loadFallbackParks();
@@ -316,7 +366,7 @@ function createLegend() {
   legend.innerHTML = `
     <h4>Park Status</h4>
     <div class="legend-item">
-      <div class="legend-color" style="background-color: #FFD700;"></div>
+      <div class="legend-color blinking" style="background-color: #8B5CF6;"></div>
       <span>Unactivated (0)</span>
     </div>
     <div class="legend-item">
@@ -350,7 +400,7 @@ function createLegend() {
 
 window.initMap = initMap;
 window.loadParksForLocation = function () {
-  loadedLocations.clear();
+  loadedPrograms.clear();
   parksByReference.clear();
   if (ciLayer) {
     ciLayer.clearLayers();
