@@ -5,20 +5,90 @@ const L = window.L;
 let map;
 let currentLocation = 'all';
 
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${url}`);
+  }
+  return response.json();
+}
+
+async function fetchAllParksFromPotaApi() {
+  const programs = await fetchJson('https://api.pota.app/programs/locations');
+  const prefixes = programs
+    .map((program) => program.prefix)
+    .filter((prefix) => typeof prefix === 'string' && prefix.length > 0);
+
+  const parksByReference = new Map();
+  const concurrency = 8;
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < prefixes.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      const prefix = prefixes[index];
+
+      try {
+        const programParks = await fetchJson(`https://api.pota.app/program/parks/${encodeURIComponent(prefix)}`);
+        for (const park of programParks) {
+          if (!park || parksByReference.has(park.reference)) {
+            continue;
+          }
+
+          const latitude = Number(park.latitude);
+          const longitude = Number(park.longitude);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            continue;
+          }
+
+          parksByReference.set(park.reference, {
+            reference: park.reference,
+            name: park.name,
+            latitude,
+            longitude,
+            grid: park.grid,
+            parktype: park.parktype || park.locationDesc || 'Park',
+            activations: Number(park.activations) || 0,
+            qsos: Number(park.qsos) || 0,
+          });
+        }
+      } catch (error) {
+        console.warn(`Failed loading program ${prefix}:`, error);
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, worker));
+  return Array.from(parksByReference.values());
+}
+
 async function getAllParks() {
   try {
-    console.log('Fetching parks from Vercel proxy...');
-    const response = await fetch('/api/pota');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    console.log('Fetching all parks directly from POTA API...');
+    const parks = await fetchAllParksFromPotaApi();
+    if (parks.length > 0) {
+      console.log('Successfully fetched parks from POTA API:', parks.length);
+      return parks;
     }
-    const parks = await response.json();
-    console.log('Successfully fetched parks from proxy:', parks.length);
-    return parks;
+
+    throw new Error('POTA API returned no parks');
   } catch (error) {
-    console.error('Error fetching parks from proxy:', error);
-    // Fallback to demonstration data
-    return getFallbackParks();
+    console.error('Error fetching parks from POTA API:', error);
+
+    // Fallback to Convex HTTP action if available
+    try {
+      if (typeof window.getAllParksFromConvex === 'function') {
+        const parks = await window.getAllParksFromConvex();
+        console.log('Successfully fetched parks from Convex:', parks.length);
+        return parks;
+      }
+    } catch (fallbackError) {
+      console.error('Convex fallback also failed:', fallbackError);
+    }
+
+    // Final fallback to demonstration data
+    return getGlobalFallbackParks();
   }
 }
 
@@ -436,6 +506,138 @@ function createLegend() {
   `;
   
   document.body.appendChild(legend);
+}
+
+function getGlobalFallbackParks() {
+  return [
+    // US Parks
+    {
+      reference: "K-1000",
+      name: "Central Park",
+      latitude: 40.7829,
+      longitude: -73.9654,
+      grid: "FN31",
+      parktype: "National Park",
+      activations: 45,
+      qsos: 890
+    },
+    {
+      reference: "K-1001",
+      name: "Yellowstone National Park",
+      latitude: 44.4280,
+      longitude: -110.5885,
+      grid: "DN63",
+      parktype: "National Park",
+      activations: 120,
+      qsos: 2450
+    },
+    {
+      reference: "K-1002",
+      name: "Grand Canyon National Park",
+      latitude: 36.0544,
+      longitude: -112.1401,
+      grid: "DM37",
+      parktype: "National Park",
+      activations: 85,
+      qsos: 1780
+    },
+    // Canada Parks
+    {
+      reference: "VE-0010",
+      name: "Banff National Park",
+      latitude: 51.4968,
+      longitude: -115.9281,
+      grid: "DO20",
+      parktype: "National Park",
+      activations: 32,
+      qsos: 680
+    },
+    {
+      reference: "VE-0020",
+      name: "Jasper National Park",
+      latitude: 52.8733,
+      longitude: -118.0813,
+      grid: "DO35",
+      parktype: "National Park",
+      activations: 28,
+      qsos: 520
+    },
+    // UK Parks
+    {
+      reference: "G-0010",
+      name: "Lake District National Park",
+      latitude: 54.4609,
+      longitude: -3.0886,
+      grid: "IO84",
+      parktype: "National Park",
+      activations: 15,
+      qsos: 320
+    },
+    {
+      reference: "G-0020",
+      name: "Snowdonia National Park",
+      latitude: 53.0685,
+      longitude: -4.0763,
+      grid: "IO73",
+      parktype: "National Park",
+      activations: 18,
+      qsos: 380
+    },
+    // Australia Parks
+    {
+      reference: "VK-0010",
+      name: "Blue Mountains National Park",
+      latitude: -33.6150,
+      longitude: 150.4769,
+      grid: "QF56",
+      parktype: "National Park",
+      activations: 22,
+      qsos: 450
+    },
+    {
+      reference: "VK-0020",
+      name: "Kakadu National Park",
+      latitude: -12.4210,
+      longitude: 132.8340,
+      grid: "PI52",
+      parktype: "National Park",
+      activations: 8,
+      qsos: 180
+    },
+    // Japan Parks
+    {
+      reference: "JA-0010",
+      name: "Fuji-Hakone-Izu National Park",
+      latitude: 35.3606,
+      longitude: 138.7274,
+      grid: "PM85",
+      parktype: "National Park",
+      activations: 25,
+      qsos: 510
+    },
+    // Germany Parks
+    {
+      reference: "DL-0010",
+      name: "Bavarian Forest National Park",
+      latitude: 49.0000,
+      longitude: 13.3833,
+      grid: "JN68",
+      parktype: "National Park",
+      activations: 12,
+      qsos: 240
+    },
+    // New Zealand Parks
+    {
+      reference: "ZL-0010",
+      name: "Fiordland National Park",
+      latitude: -44.9625,
+      longitude: 167.6100,
+      grid: "RE38",
+      parktype: "National Park",
+      activations: 10,
+      qsos: 210
+    }
+  ];
 }
 
 window.initMap = initMap;
